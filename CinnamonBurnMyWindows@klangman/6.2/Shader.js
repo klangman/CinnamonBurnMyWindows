@@ -22,46 +22,15 @@ const Cogl = imports.gi.Cogl;
 const Cinnamon = imports.gi.Cinnamon;
 const Settings = imports.ui.settings;
 
-//import Shell from 'gi://Shell';
-const utils = require('./utils.js');
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// This is the base class for all shaders of Burn-My-Windows. It automagically loads    //
-// the shader's source code from the resource file resources/shaders/<nick>.glsl and    //
-// ensures that some standard uniforms are always updated.                              //
-// Using Shell.GLSLEffect as a base class has some benefits and some drawbacks. The     //
-// main benefit when compared to Clutter.ShaderEffect is that setting uniforms of types //
-// vec2, vec3 or vec4 is supported via the API (with Clutter.ShaderEffect the GJS       //
-// binding does not work properly). However, there are two drawbacks: On the one hand,  //
-// the shader source code is cached statically - this means if we want to have a        //
-// different shader, we have to derive a new class. Therefore, each effect has to       //
-// derive its own class from the class below. This is encapsulated in the               //
-// ShaderFactory, however it is some really awkward code. The other drawback is the     //
-// hard-coded use of straight alpha (as opposed to premultiplied). This makes the       //
-// shaders a bit more complicated than required.                                        //
-//                                                                                      //
-// The Shader fires three signals:                                                      //
-//   * begin-animation:    This is called each time a new animation is started. It can  //
-//                         be used to set uniform values which do not change during the //
-//                         animation.                                                   //
-//   * update-animation:   This is called at each frame during the animation. It can be //
-//                         used to set uniforms which change during the animation.      //
-//   * end-animation:      This is called when the animation is stopped. This can be    //
-//                         used to clean up any resources.
-//////////////////////////////////////////////////////////////////////////////////////////
 /*
-// Since Cinnamon.GLSLEffect only exists in Mint22/Cinnamon6.2, this is a JS clone
+// Since Cinnamon.GLSLEffect only exists in Mint22/Cinnamon6.2, this is a JS clone for older Cinnamon versions
 var GLSLEffect = GObject.registerClass( { /-, GTypeName: 'Cjs_GLSLEffect'-/ },
 class GLSLEffect extends Clutter.OffscreenEffect {
    static base_pipeline = null;
    constructor() {
       if (GLSLEffect.base_pipeline === null) {
-         //let backend = Clutter.get_default_backend()
-         //let ctx = backend.get_cogl_context();
-         //let renderer = new Cogl.Renderer();
-         //let display = new Cogl.Display(renderer, new Cogl.OnscreenTemplate(new Cogl.SwapChain()));
-         //let ctx = new Cogl.Context(display);
-         let ctx = new Cogl.Context(null);
+         let backend = Clutter.get_default_backend()
+         let ctx = backend.get_cogl_context(); // This does not exist in Cinnamon, blocked here for now! :-(
          GLSLEffect.base_pipeline = new Cogl.Pipeline( ctx );
          GLSLEffect.base_pipeline.set_blend( "RGB = ADD (SRC_COLOR * (SRC_COLOR[A]), DST_COLOR * (1-SRC_COLOR[A]))" );
          this.build_pipeline();
@@ -106,6 +75,31 @@ class GLSLEffect extends Clutter.OffscreenEffect {
 }
 );
 */
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// This is the base class for all shaders of Burn-My-Windows. It automagically loads    //
+// the shader's source code from the resource file resources/shaders/<nick>.glsl and    //
+// ensures that some standard uniforms are always updated.                              //
+// Using Shell.GLSLEffect as a base class has some benefits and some drawbacks. The     //
+// main benefit when compared to Clutter.ShaderEffect is that setting uniforms of types //
+// vec2, vec3 or vec4 is supported via the API (with Clutter.ShaderEffect the GJS       //
+// binding does not work properly). However, there are two drawbacks: On the one hand,  //
+// the shader source code is cached statically - this means if we want to have a        //
+// different shader, we have to derive a new class. Therefore, each effect has to       //
+// derive its own class from the class below. This is encapsulated in the               //
+// ShaderFactory, however it is some really awkward code. The other drawback is the     //
+// hard-coded use of straight alpha (as opposed to premultiplied). This makes the       //
+// shaders a bit more complicated than required.                                        //
+//                                                                                      //
+// The Shader fires three signals:                                                      //
+//   * begin-animation:    This is called each time a new animation is started. It can  //
+//                         be used to set uniform values which do not change during the //
+//                         animation.                                                   //
+//   * update-animation:   This is called at each frame during the animation. It can be //
+//                         used to set uniforms which change during the animation.      //
+//   * end-animation:      This is called when the animation is stopped. This can be    //
+//                         used to clean up any resources.
+//////////////////////////////////////////////////////////////////////////////////////////
 var Shader = GObject.registerClass(
   {
     Signals: {
@@ -262,10 +256,15 @@ class Shader extends Cinnamon.GLSLEffect {  // ---------------------------------
     // This loads a GLSL file from the extension's resources to a JavaScript string. The
     // code from "common.glsl" is prepended automatically.
     _loadShaderResource(path) {
-      let common = utils.getStringResource('/shaders/common.glsl');
-      let code   = utils.getStringResource(path);
+      let data = Gio.resources_lookup_data('/shaders/common.glsl', 0);
+      let common = new TextDecoder().decode(data.get_data());
+      data = Gio.resources_lookup_data(path, 0);
+      let code = new TextDecoder().decode(data.get_data());
+
+      //let common = utils.getStringResource('/shaders/common.glsl');
+      //let code   = utils.getStringResource(path);
 
       // Add a trailing newline. Else the GLSL compiler complains...
       return common + '\n' + code + '\n';
     }
-  });
+});

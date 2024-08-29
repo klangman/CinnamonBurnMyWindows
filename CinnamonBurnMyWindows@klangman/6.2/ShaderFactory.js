@@ -60,7 +60,6 @@ var ShaderFactory = class ShaderFactory {
       // Only try to register the new type once.
       if (GObject.type_from_name(typeName) == null) {
         const outerThis = this;
-        log( `Registering new ShaderImp "${typeName}"` );
         GObject.registerClass({GTypeName: typeName}, class ShaderImp extends Shader.Shader {
           // This will actually load the GLSL source code from the resources.
           _init() {

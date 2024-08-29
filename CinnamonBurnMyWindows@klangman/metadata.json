@@ -2,7 +2,7 @@
   "uuid": "CinnamonBurnMyWindows@klangman",
   "name": "Burn My Windows",
   "version": "0.9.0",
-  "description": "New window and window close effects based on Schneegans's Gnome extension",
+  "description": "Window open/close effects based on the Burn-My-Windows Gnome extension by Schneegans",
   "url": "https://github.com/klangman/CinnamonBurnMyWindows",
   "website": "https://github.com/klangman/CinnamonBurnMyWindows",
   "cinnamon-version": ["6.2"]

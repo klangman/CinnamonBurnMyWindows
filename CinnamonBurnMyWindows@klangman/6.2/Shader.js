@@ -23,7 +23,7 @@ const Cinnamon = imports.gi.Cinnamon;
 const Settings = imports.ui.settings;
 
 /*
-// Since Cinnamon.GLSLEffect only exists in Mint22/Cinnamon6.2, this is a JS clone for older Cinnamon versions
+// Since Cinnamon.GLSLEffect only exists in Mint22/Cinnamon6.2, this is an attempt to make a JS clone for older Cinnamon versions
 var GLSLEffect = GObject.registerClass( { /-, GTypeName: 'Cjs_GLSLEffect'-/ },
 class GLSLEffect extends Clutter.OffscreenEffect {
    static base_pipeline = null;
@@ -102,6 +102,8 @@ class GLSLEffect extends Clutter.OffscreenEffect {
 //////////////////////////////////////////////////////////////////////////////////////////
 var Shader = GObject.registerClass(
   {
+    // Use a random name so that the extension can be removed then added again during the same Cinnamon session
+    GTypeName: `Cjs_BMW_Shader_${Math.floor(Math.random() * 100000) + 1}`,
     Signals: {
       'begin-animation': {
         param_types: [

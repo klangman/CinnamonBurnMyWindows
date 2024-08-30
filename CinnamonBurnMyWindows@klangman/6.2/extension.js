@@ -45,6 +45,25 @@ const Gettext = imports.gettext;
 const GLib = imports.gi.GLib;
 const Settings = imports.ui.settings;
 
+const RANDOMIZED = 999;
+
+const Effect = {
+  Apparition: 0,
+  EnergizeA: 3,
+  EnergizeB: 4,
+  Glide: 6,
+  Glitch: 7,
+  Hexagon: 8,
+  Incinerate: 9,
+  Pixelate: 12,
+  PixelWheel: 13,
+  PixelWipe: 14,
+  Portal: 15,
+  TVEffect: 18,
+  TVGlitch: 19,
+  Wisps: 20
+}
+
 const UUID = "CinnamonBurnMyWindows@klangman";
 
 Gettext.bindtextdomain(UUID, GLib.get_home_dir() + "/.local/share/locale");
@@ -158,7 +177,7 @@ class BurnMyWindows {
 
                // If there is an applicable effect profile, we intercept the ease() method to
                // setup our own effect.
-               const chosenEffect = {effect: extensionThis._ALL_EFFECTS[effectIdx], profile: extensionThis._settings};
+               const chosenEffect = extensionThis._chooseEffect(actor, forOpening);
 
                if (chosenEffect) {
                   // Store the original ease() method of the actor.
@@ -238,6 +257,58 @@ class BurnMyWindows {
     Main.wm._shouldAnimate = this._origShouldAnimate;
 
     this._settings = null;
+  }
+
+  // Choose an effect based on the users preferences as defined in the setting for the current window action
+  _chooseEffect(actor, forOpening) {
+    let effectIdx;
+    if (forOpening) {
+      effectIdx = this._settings.getValue("open-window-effect");
+    } else {
+      effectIdx = this._settings.getValue("close-window-effect");
+    }
+    if (effectIdx != RANDOMIZED) {
+       // Return the effect that the setting reflects
+       return {effect: this._ALL_EFFECTS[effectIdx], profile: this._settings};
+    } else {
+      // Create an array of the enabled random options
+      let effectOptions = [];
+      let append = (forOpening)?"-open":"-close";
+      if (this._settings.getValue("apparition-random-include" + append))
+         effectOptions.push(Effect.Apparition);
+      if (this._settings.getValue("energize-a-random-include" + append))
+         effectOptions.push(Effect.EnergizeA);
+      if (this._settings.getValue("energize-b-random-include" + append))
+         effectOptions.push(Effect.EnergizeB);
+      if (this._settings.getValue("glide-random-include" + append))
+         effectOptions.push(Effect.Glide);
+      if (this._settings.getValue("glitch-random-include" + append))
+         effectOptions.push(Effect.Glitch);
+      if (this._settings.getValue("hexagon-random-include" + append))
+         effectOptions.push(Effect.Hexagon);
+      if (this._settings.getValue("incinerate-random-include" + append))
+         effectOptions.push(Effect.Incinerate);
+      if (this._settings.getValue("pixelate-random-include" + append))
+         effectOptions.push(Effect.Pixelate);
+      if (this._settings.getValue("pixel-wheel-random-include" + append))
+         effectOptions.push(Effect.PixelWheel);
+      if (this._settings.getValue("pixel-wipe-random-include" + append))
+         effectOptions.push(Effect.PixelWipe);
+      if (this._settings.getValue("portal-random-include" + append))
+         effectOptions.push(Effect.Portal);
+      if (this._settings.getValue("tv-effect-random-include" + append))
+         effectOptions.push(Effect.TVEffect);
+      if (this._settings.getValue("tv-glitch-random-include" + append))
+         effectOptions.push(Effect.TVGlitch);
+      if (this._settings.getValue("wisps-random-include" + append))
+         effectOptions.push(Effect.Wisps);
+      // If any random options are enabled, return a randomly chosen effect, else return null
+      if (effectOptions.length > 0) {
+        return {effect: this._ALL_EFFECTS[effectOptions[(Math.floor(Math.random() * effectOptions.length))]], profile: this._settings};
+      } else {
+        return null;
+      }
+    }
   }
 
   // This method adds the given effect using the settings from the given profile to the

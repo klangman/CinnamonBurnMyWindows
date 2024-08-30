@@ -1,17 +1,22 @@
 {
   "layout" : {
     "type" : "layout",
-    "pages" : ["general-page", "effects-page"],
+    "pages" : ["general-page", "effects-page", "random-page"],
 
     "general-page" : {
       "type" : "page",
       "title" : "General",
-      "sections" : ["general-settings"] 
+      "sections" : ["general-settings"]
     },
     "effects-page" : {
       "type" : "page",
       "title" : "Effect Settings",
-      "sections" : ["effect-selector-section", "effect-settings"] 
+      "sections" : ["effect-selector-section", "effect-settings"]
+    },
+    "random-page" : {
+      "type" : "page",
+      "title" : "Random Effects",
+      "sections" : ["random-section"]
     },
 
     "general-settings" : {
@@ -42,8 +47,165 @@
                 "tv-effect-color", "tv-animation-time",
                 "tv-glitch-scale", "tv-glitch-strength", "tv-glitch-speed", "tv-glitch-color", "tv-glitch-animation-time",
                 "wisps-scale", "wisps-color-1", "wisps-color-2", "wisps-color-3", "wisps-animation-time"]
+    },
+    "random-section" : {
+      "type" : "section",
+      "title" : "Effects included in the randomized sets:",
+      "keys" : ["random-title", "apparition-random-include", "energize-a-random-include", "energize-b-random-include", "glide-random-include", "glitch-random-include", "hexagon-random-include", "incinerate-random-include", "pixelate-random-include", "pixel-wheel-random-include", "pixel-wipe-random-include", "portal-random-include", "tv-effect-random-include", "tv-glitch-random-include", "wisps-random-include"]
     }
   },
+
+  "random-title" : {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsTitleWidget",
+    "description" : "Effect",
+    "titleA" : "Open",
+    "titleB" : "Close"
+  },
+
+  "apparition-random-include": {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsWidget",
+    "description" : "Apparition",
+    "open" : "apparition-random-include-open",
+    "close" : "apparition-random-include-close"
+  },
+  "energize-a-random-include": {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsWidget",
+    "description" : "Energize A",
+    "open" : "energize-a-random-include-open",
+    "close" : "energize-a-random-include-close"
+  },
+  "energize-b-random-include": {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsWidget",
+    "description" : "Energize B",
+    "open" : "energize-b-random-include-open",
+    "close" : "energize-b-random-include-close"
+  },
+  "glide-random-include": {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsWidget",
+    "description" : "Glide",
+    "open" : "glide-random-include-open",
+    "close" : "glide-random-include-close"
+  },
+  "glitch-random-include": {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsWidget",
+    "description" : "Glitch",
+    "open" : "glitch-random-include-open",
+    "close" : "glitch-random-include-close"
+  },
+  "hexagon-random-include": {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsWidget",
+    "description" : "Hexagon",
+    "open" : "hexagon-random-include-open",
+    "close" : "hexagon-random-include-close"
+  },
+  "incinerate-random-include": {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsWidget",
+    "description" : "Incinerate",
+    "open" : "incinerate-random-include-open",
+    "close" : "incinerate-random-include-close"
+  },
+  "pixelate-random-include": {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsWidget",
+    "description" : "Pixelate",
+    "open" : "pixelate-random-include-open",
+    "close" : "pixelate-random-include-close"
+  },
+  "pixel-wheel-random-include": {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsWidget",
+    "description" : "Pixel Wheel",
+    "open" : "pixel-wheel-random-include-open",
+    "close" : "pixel-wheel-random-include-close"
+  },
+  "pixel-wipe-random-include": {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsWidget",
+    "description" : "Pixel Wipe",
+    "open" : "pixel-wipe-random-include-open",
+    "close" : "pixel-wipe-random-include-close"
+  },
+  "portal-random-include": {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsWidget",
+    "description" : "Portal",
+    "open" : "portal-random-include-open",
+    "close" : "portal-random-include-close"
+  },
+  "tv-effect-random-include": {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsWidget",
+    "description" : "TV Effect",
+    "open" : "tv-effect-random-include-open",
+    "close" : "tv-effect-random-include-close"
+  },
+  "tv-glitch-random-include": {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsWidget",
+    "description" : "TV Glitch",
+    "open" : "tv-glitch-random-include-open",
+    "close" : "tv-glitch-random-include-close"
+  },
+  "wisps-random-include": {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsWidget",
+    "description" : "Wisps",
+    "open" : "wisps-random-include-open",
+    "close" : "wisps-random-include-close"
+  },
+
+  "apparition-random-include-open" :  { "type": "generic", "default": true },
+  "energize-a-random-include-open" :  { "type": "generic", "default": true },
+  "energize-b-random-include-open" :  { "type": "generic", "default": true },
+  "glide-random-include-open" :       { "type": "generic", "default": true },
+  "glitch-random-include-open" :      { "type": "generic", "default": true },
+  "hexagon-random-include-open" :     { "type": "generic", "default": true },
+  "incinerate-random-include-open" :  { "type": "generic", "default": true },
+  "pixelate-random-include-open" :    { "type": "generic", "default": true },
+  "pixel-wheel-random-include-open" : { "type": "generic", "default": true },
+  "pixel-wipe-random-include-open" :  { "type": "generic", "default": true },
+  "portal-random-include-open" :      { "type": "generic", "default": true },
+  "tv-effect-random-include-open" :   { "type": "generic", "default": true },
+  "tv-glitch-random-include-open" :   { "type": "generic", "default": true },
+  "wisps-random-include-open" :       { "type": "generic", "default": true },
+
+  "apparition-random-include-close" :  { "type": "generic", "default": true },
+  "energize-a-random-include-close" :  { "type": "generic", "default": true },
+  "energize-b-random-include-close" :  { "type": "generic", "default": true },
+  "glide-random-include-close" :       { "type": "generic", "default": true },
+  "glitch-random-include-close" :      { "type": "generic", "default": true },
+  "hexagon-random-include-close" :     { "type": "generic", "default": true },
+  "incinerate-random-include-close" :  { "type": "generic", "default": true },
+  "pixelate-random-include-close" :    { "type": "generic", "default": true },
+  "pixel-wheel-random-include-close" : { "type": "generic", "default": true },
+  "pixel-wipe-random-include-close" :  { "type": "generic", "default": true },
+  "portal-random-include-close" :      { "type": "generic", "default": true },
+  "tv-effect-random-include-close" :   { "type": "generic", "default": true },
+  "tv-glitch-random-include-close" :   { "type": "generic", "default": true },
+  "wisps-random-include-close" :       { "type": "generic", "default": true },
 
   "effect-selector": {
     "type": "combobox",
@@ -84,7 +246,8 @@
       "Portal": 15,
       "TV Effect": 18,
       "TV Glitch": 19,
-      "Wisps": 20
+      "Wisps": 20,
+      "Randomized": 999
     },
     "description": "Open window effect"
   },
@@ -106,7 +269,8 @@
       "Portal": 15,
       "TV Effect": 18,
       "TV Glitch": 19,
-      "Wisps": 20
+      "Wisps": 20,
+      "Randomized": 999
     },
     "description": "Close window effect"
   },

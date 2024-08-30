@@ -53,7 +53,6 @@ Because Cinnamon is missing a required API, the following effects are disabled. 
 
 ## Possible future enhancements
 
-- Randomized effect selection that allows you to select a set of effects for which one will be randomly selected for each event.
 - Specifying effects that can apply to specific application windows. i.e Selecting which effect occurs when closing Firefox.
 
 ## Installation

@@ -34,6 +34,7 @@
       "type" : "section",
       "title" : "Effect Specific Settings",
       "keys" : ["apparition-shake-intensity", "apparition-twirl-intensity", "apparition-suction-intensity", "apparition-randomness", "apparition-animation-time",
+                "doom-horizontal-scale", "doom-vertical-scale", "doom-pixel-size", "doom-animation-time",
                 "energize-a-scale", "energize-a-color", "energize-a-animation-time",
                 "energize-b-scale", "energize-b-color", "energize-b-animation-time",
                 "glide-scale", "glide-squish", "glide-tilt", "glide-shift", "glide-animation-time",
@@ -51,7 +52,7 @@
     "random-section" : {
       "type" : "section",
       "title" : "Effects included in the randomized sets:",
-      "keys" : ["random-title", "apparition-random-include", "energize-a-random-include", "energize-b-random-include", "glide-random-include", "glitch-random-include", "hexagon-random-include", "incinerate-random-include", "pixelate-random-include", "pixel-wheel-random-include", "pixel-wipe-random-include", "portal-random-include", "tv-effect-random-include", "tv-glitch-random-include", "wisps-random-include"]
+      "keys" : ["random-title", "apparition-random-include", "doom-random-include", "energize-a-random-include", "energize-b-random-include", "glide-random-include", "glitch-random-include", "hexagon-random-include", "incinerate-random-include", "pixelate-random-include", "pixel-wheel-random-include", "pixel-wipe-random-include", "portal-random-include", "tv-effect-random-include", "tv-glitch-random-include", "wisps-random-include"]
     }
   },
 
@@ -71,6 +72,14 @@
     "description" : "Apparition",
     "open" : "apparition-random-include-open",
     "close" : "apparition-random-include-close"
+  },
+  "doom-random-include": {
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "TwoCheckButtonsWidget",
+    "description" : "Doom",
+    "open" : "doom-random-include-open",
+    "close" : "doom-random-include-close"
   },
   "energize-a-random-include": {
     "type" : "custom",
@@ -178,6 +187,7 @@
   },
 
   "apparition-random-include-open" :  { "type": "generic", "default": true },
+  "doom-random-include-open" :        { "type": "generic", "default": true },
   "energize-a-random-include-open" :  { "type": "generic", "default": true },
   "energize-b-random-include-open" :  { "type": "generic", "default": true },
   "glide-random-include-open" :       { "type": "generic", "default": true },
@@ -193,6 +203,7 @@
   "wisps-random-include-open" :       { "type": "generic", "default": true },
 
   "apparition-random-include-close" :  { "type": "generic", "default": true },
+  "doom-random-include-close" :        { "type": "generic", "default": true },
   "energize-a-random-include-close" :  { "type": "generic", "default": true },
   "energize-b-random-include-close" :  { "type": "generic", "default": true },
   "glide-random-include-close" :       { "type": "generic", "default": true },
@@ -212,6 +223,7 @@
     "default": 0,
     "options": {
       "Apparition": 0,
+      "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
       "Glide": 6,
@@ -234,6 +246,7 @@
     "default": 0,
     "options": {
       "Apparition": 0,
+      "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
       "Glide": 6,
@@ -257,6 +270,7 @@
     "default": 0,
     "options": {
       "Apparition": 0,
+      "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
       "Glide": 6,
@@ -326,22 +340,42 @@
   },
 
   "doom-horizontal-scale": {
-     "type": "generic",
+     "type": "scale",
+     "description" : "Horizontal Scale",
+     "min" : 1,
+     "max" : 50,
+     "step" : 1,
+     "dependency" : "effect-selector=2",
      "default": 10.0
   },
 
   "doom-vertical-scale": {
-     "type": "generic",
+     "type": "scale",
+     "description" : "Vertical Scale",
+     "min" : 1,
+     "max" : 50,
+     "step" : 1,
+     "dependency" : "effect-selector=2",
      "default": 10.0
   },
 
   "doom-pixel-size": {
-     "type": "generic",
+     "type": "scale",
+     "description" : "Pixel Size",
+     "min" : 1,
+     "max" : 50,
+     "step" : 1,
+     "dependency" : "effect-selector=2",
      "default": 10
   },
 
   "doom-animation-time": {
-     "type": "generic",
+     "type": "scale",
+     "description" : "Effect Duration (milliseconds)",
+     "min" : 100,
+     "max" : 10000,
+     "step" : 10,
+     "dependency" : "effect-selector=2",
      "default": 1000
   },
 

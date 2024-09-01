@@ -18,13 +18,22 @@ This extension needs the Cinnamon.GLSLEffect class which is only available in Ci
 
 ## Known issues
 
-In the setting configure window under the "Effect Settings" tab, when changing the "Show setting for effect" drop-down to a different effect, sometimes the contents under the "Effect Specific Settings" title will not properly update so that only a subset of the available options are visible. I believe this is a Cinnamon bug. You can force Cinnamon to properly redraw the options by selecting the "General" tab then selecting the "Effect Settings" tab again. After that, the complete set of "Effect Specific Settings" should be visible.
+In the setting configure window under the "Effect Settings" tab, when changing the "Show setting for effect" drop-down to select a different effect, sometimes the contents under the "Effect Specific Settings" title will not properly update. Because of this only a subset of the available options are visible. I believe this is a Cinnamon bug. You can force Cinnamon to properly redraw the options by selecting the "General" tab then selecting the "Effect Settings" tab again. After that, the complete set of "Effect Specific Settings" should be visible.
 
-When closing the Steam Client "setting" window the 'close window effect' does not get a chance to act before the window disappears, resulting in the closing effect to show where the window had existed but otherwise has no negative effect.
+When closing the Steam Client "setting" window the 'close window effect' does not show the windows contents, resulting in the closing effect to show where the window had existed but otherwise has no negative effect.
+
+Starting VirtualBox shows a full screen animation of both the Open and Close effect even when the window is not starting maximized. I assume this is caused by some weirdness with how VirtualBox was written.
+
+The Doom effect seems to finish animating at a noticeably lower position than where the window actually is located. This results in the sudden jump up after the animation is completed.
+
+All open window effects seem to animate in a location that is one pixel off in both x and y location from the windows real location. This causes a very small (nearly unnoticeable) jump of the window after the animation has finished.
+
+The window shadows are not part of the animation and therefore they suddenly appear right after the animation completes.
 
 ### Currently these effects are working in Cinnamon:
 
 - Apparition
+- Doom
 - Energize A
 - Energize B
 - Glide
@@ -44,7 +53,6 @@ When closing the Steam Client "setting" window the 'close window effect' does no
 Because Cinnamon is missing a required API, the following effects are disabled. I am hoping to find a way around this issue:
 
 - Broken Glass
-- Doom
 - Fire
 - Matrix
 - PaintBrush

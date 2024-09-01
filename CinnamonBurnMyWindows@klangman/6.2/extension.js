@@ -38,12 +38,15 @@ const TVEffect = require('./effects/TVEffect.js');
 const TVGlitch = require('./effects/TVGlitch.js');
 const Wisps = require('./effects/Wisps.js');
 
+const ShouldAnimateManager = require("ShouldAnimateManager.js");
+
 const Main = imports.ui.main;
 const Gio = imports.gi.Gio;
 const Meta = imports.gi.Meta;
 const Gettext = imports.gettext;
 const GLib = imports.gi.GLib;
 const Settings = imports.ui.settings;
+const MessageTray = imports.ui.messageTray;
 
 const RANDOMIZED = 999;
 
@@ -131,102 +134,72 @@ class BurnMyWindows {
       // We will use extensionThis to refer to the extension inside the patched methods.
       const extensionThis = this;
 
-      // We will monkey-patch this method. Let's store the original one.
-      this._origShouldAnimate         = Main.wm._shouldAnimate;
+      // Intercept _shouldAnimate() for Window Map/Destroy events
+      this.shouldAnimateManager = new ShouldAnimateManager.ShouldAnimateManager( UUID );
+      let error = this.shouldAnimateManager.connect(ShouldAnimateManager.Events.MapWindow+ShouldAnimateManager.Events.DestroyWindow,
+         function(actor, types, event) {
+            // If there is an applicable effect profile, we intercept the ease() method to
+            // setup our own effect.
+            const chosenEffect = extensionThis._chooseEffect(actor, (event == ShouldAnimateManager.Events.MapWindow));
 
-      // ------------------------------- patching the window animations outside the overview
+            if (chosenEffect) {
+               // Store the original ease() method of the actor.
+               const orig = actor.ease;
 
-      // If a window is created, the transitions are set up in the async _mapWindow() of the
-      // WindowManager:
-      // https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/main/js/ui/windowManager.js#L1436
-      // AFAIK, overriding this method is not possible as it's called by a signal to which
-      // it is bound via the bind() method. To tweak the async transition anyways, we
-      // override the actors ease() method once. We do this in _shouldAnimateActor() which
-      // is called right before the ease() in _mapWindow:
-      // https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/main/js/ui/windowManager.js#L1465
+               // Temporarily force the new window & closing window effect to be enabled in cinnamon
+               let orig_desktop_effects_map_type = Main.wm.desktop_effects_map_type;
+               let orig_desktop_effects_close_type = Main.wm.desktop_effects_close_type;
+               Main.wm.desktop_effects_map_type = "traditional";
+               Main.wm.desktop_effects_close_type = "traditional";
 
-      // The same trick is done for the window-close animation. This is set up in a similar
-      // fashion in the WindowManager's _destroyWindow():
-      // https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/main/js/ui/windowManager.js#L1525
-      // Here is _shouldAnimateActor() also called right before. So we use it again to
-      // monkey-patch the window actor's ease() once.
+               // Now intercept the next call to actor.ease().
+               actor.ease = function(...params) {
+                  // There is a really weird issue in GNOME Shell 44: A few non-GTK windows are
+                  // resized directly after they are mapped on X11. This happens for instance
+                  // for keepassxc after it was closed in the maximized state. As the
+                  // _mapWindow() method is called asynchronously, the window is not yet visible
+                  // when the resize happens. Hence, our ease-override is called for the resize
+                  // animation instead of the window-open or window-close animation. This is not
+                  // what we want. So we check again whether the ease() call is for the
+                  // window-open or window-close animation. If not, we just call the original
+                  // ease() method. See also:
+                  // https://github.com/Schneegans/Burn-My-Windows/issues/335
+                  const stack      = (new Error()).stack;
+                  const forClosing = stack.includes('_destroyWindow@');
+                  const forOpening = stack.includes('_mapWindow@');
 
-      // We override WindowManager._shouldAnimateActor() also for another purpose: Usually,
-      // it returns false when we are in the overview. This prevents the window animations
-      // there. To enable animations in the overview, we check inside the method whether it
-      // was called by either _mapWindow or _destroyWindow. If so, we return true. Let's see
-      // if this breaks stuff left and right...
-      Main.wm._shouldAnimate = function(actor, types) {
-         const isNormalWindow = actor.meta_window.window_type == Meta.WindowType.NORMAL;
-         const isDialogWindow = actor.meta_window.window_type == Meta.WindowType.MODAL_DIALOG || actor.meta_window.window_type == Meta.WindowType.DIALOG;
+                  if (forClosing || forOpening) {
+                    // Quickly restore the original behavior. Nobody noticed, I guess :D
+                    actor.ease = orig;
 
-         if (isNormalWindow || isDialogWindow) {
-            const stack      = (new Error()).stack;
-            const forClosing = stack.includes('_destroyWindow@');
-            const forOpening = stack.includes('_mapWindow@');
+                    // And then create the effect!
+                    extensionThis._setupEffect(actor, forOpening, chosenEffect.effect,
+                                               chosenEffect.profile);
+                  } else {
+                    orig.apply(this, params);
+                  }
+                  // Restore the original cinnamon new window & closing window effect settings
+                  Main.wm.desktop_effects_map_type = orig_desktop_effects_map_type;
+                  Main.wm.desktop_effects_close_type = orig_desktop_effects_close_type
+             };
 
-            // This is also called in other cases, for instance when minimizing windows. We are
-            // only interested in window opening and window closing for now.
-            if (forClosing || forOpening) {
-               let effectIdx;
-               if (forOpening) {
-                  effectIdx = extensionThis._settings.getValue("open-window-effect");
-               } else {
-                  effectIdx = extensionThis._settings.getValue("close-window-effect");
-               }
-
-               // If there is an applicable effect profile, we intercept the ease() method to
-               // setup our own effect.
-               const chosenEffect = extensionThis._chooseEffect(actor, forOpening);
-
-               if (chosenEffect) {
-                  // Store the original ease() method of the actor.
-                  const orig = actor.ease;
-
-                  // Temporarily force the new window & closing window effect to be enabled in cinnamon
-                  let orig_desktop_effects_map_type = Main.wm.desktop_effects_map_type;
-                  let orig_desktop_effects_close_type = Main.wm.desktop_effects_close_type;
-                  Main.wm.desktop_effects_map_type = "traditional";
-                  Main.wm.desktop_effects_close_type = "traditional";
-
-                  // Now intercept the next call to actor.ease().
-                  actor.ease = function(...params) {
-                     // There is a really weird issue in GNOME Shell 44: A few non-GTK windows are
-                     // resized directly after they are mapped on X11. This happens for instance
-                     // for keepassxc after it was closed in the maximized state. As the
-                     // _mapWindow() method is called asynchronously, the window is not yet visible
-                     // when the resize happens. Hence, our ease-override is called for the resize
-                     // animation instead of the window-open or window-close animation. This is not
-                     // what we want. So we check again whether the ease() call is for the
-                     // window-open or window-close animation. If not, we just call the original
-                     // ease() method. See also:
-                     // https://github.com/Schneegans/Burn-My-Windows/issues/335
-                     const stack      = (new Error()).stack;
-                     const forClosing = stack.includes('_destroyWindow@');
-                     const forOpening = stack.includes('_mapWindow@');
-
-                     if (forClosing || forOpening) {
-                       // Quickly restore the original behavior. Nobody noticed, I guess :D
-                       actor.ease = orig;
-
-                       // And then create the effect!
-                       extensionThis._setupEffect(actor, forOpening, chosenEffect.effect,
-                                                  chosenEffect.profile);
-                     } else {
-                       orig.apply(this, params);
-                     }
-                     // Restore the original cinnamon new window & closing window effect settings
-                     Main.wm.desktop_effects_map_type = orig_desktop_effects_map_type;
-                     Main.wm.desktop_effects_close_type = orig_desktop_effects_close_type
-                };
-
-                return true;
-               }
+             return true;
             }
-         }
 
-         return extensionThis._origShouldAnimate.apply(this, [actor, types]);
-      };
+            return ShouldAnimateManager.RUN_ORIGINAL_FUNCTION;
+         } );
+
+      // If we failed to install a handler for the _shouldAnimate() events then show a notification
+      if (error) {
+         let source = new MessageTray.Source(this.meta.name);
+         let notification = new MessageTray.Notification(source, this.meta.name + " " + _("was NOT enabled"),
+            _("The existing extension") + " " + error + " " + _("conflicts with this extension."),
+            {icon: new St.Icon({icon_name: "cinnamon-magic-lamp", icon_type: St.IconType.FULLCOLOR, icon_size: source.ICON_SIZE })}
+            );
+         Main.messageTray.add(source);
+         source.notify(notification);
+         this.settings.setValue("showNotification", 0);
+      }
 
     // Make sure to remove any effects if requested by the window manager.
     this._killEffectsSignal =
@@ -254,7 +227,7 @@ class BurnMyWindows {
     global.window_manager.disconnect(this._killEffectsSignal);
 
     // Restore the original window-open and window-close animations.
-    Main.wm._shouldAnimate = this._origShouldAnimate;
+    this.shouldAnimateManager.disconnect();
 
     this._settings = null;
   }

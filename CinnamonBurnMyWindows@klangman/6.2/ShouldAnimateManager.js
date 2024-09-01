@@ -52,7 +52,7 @@ class ShouldAnimateManager {
    connect(event, handler) {
       if (Main.wm._shouldAnimateManager) {
          for (let i=0 ; i<Main.wm._shouldAnimateManager.length ; i++) {
-            if (event === (Main.wm._shouldAnimateManager[i].event & event)) {
+            if ((Main.wm._shouldAnimateManager[i].event & event) != 0) {
                return Main.wm._shouldAnimateManager[i].owner;
             }
          }

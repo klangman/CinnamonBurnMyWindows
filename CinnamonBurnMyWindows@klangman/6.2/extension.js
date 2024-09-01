@@ -47,6 +47,7 @@ const Gettext = imports.gettext;
 const GLib = imports.gi.GLib;
 const Settings = imports.ui.settings;
 const MessageTray = imports.ui.messageTray;
+const St = imports.gi.St;
 
 const RANDOMIZED = 999;
 
@@ -192,13 +193,12 @@ class BurnMyWindows {
       // If we failed to install a handler for the _shouldAnimate() events then show a notification
       if (error) {
          let source = new MessageTray.Source(this.meta.name);
-         let notification = new MessageTray.Notification(source, this.meta.name + " " + _("was NOT enabled"),
+         let notification = new MessageTray.Notification(source, _("Error") + ": " + this.meta.name + " " + _("was NOT enabled"),
             _("The existing extension") + " " + error + " " + _("conflicts with this extension."),
-            {icon: new St.Icon({icon_name: "cinnamon-magic-lamp", icon_type: St.IconType.FULLCOLOR, icon_size: source.ICON_SIZE })}
+            {icon: new St.Icon({icon_name: "cinnamon-burn-my-window", icon_type: St.IconType.FULLCOLOR, icon_size: source.ICON_SIZE })}
             );
          Main.messageTray.add(source);
          source.notify(notification);
-         this.settings.setValue("showNotification", 0);
       }
 
     // Make sure to remove any effects if requested by the window manager.

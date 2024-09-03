@@ -63,7 +63,8 @@ var Effect = class Effect {
     this.shaderFactory = new ShaderFactory(Effect.getNick(), (shader) => {
       // Create the texture in the first call.
       if (!this._brushTexture) {
-        const brushData    = GdkPixbuf.Pixbuf.new_from_resource('/img/brush.png');
+        const brushData = GdkPixbuf.Pixbuf.new_from_file( GLib.get_home_dir() +
+           '/.local/share/cinnamon/extensions/' + UUID + '/resources/img/brush.png');
         this._brushTexture = new Clutter.Image();
         this._brushTexture.set_data(brushData.get_pixels(),
                                     Cogl.PixelFormat.RGBA_8888_PRE, brushData.width,

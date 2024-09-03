@@ -21,6 +21,9 @@ const Meta = imports.gi.Meta;
 const Cogl = imports.gi.Cogl;
 const Cinnamon = imports.gi.Cinnamon;
 const Settings = imports.ui.settings;
+const GLib = imports.gi.GLib;
+
+const UUID = "CinnamonBurnMyWindows@klangman";
 
 /*
 // Since Cinnamon.GLSLEffect only exists in Mint22/Cinnamon6.2, this is an attempt to make a JS clone for older Cinnamon versions
@@ -258,13 +261,15 @@ class Shader extends Cinnamon.GLSLEffect {  // ---------------------------------
     // This loads a GLSL file from the extension's resources to a JavaScript string. The
     // code from "common.glsl" is prepended automatically.
     _loadShaderResource(path) {
-      let data = Gio.resources_lookup_data('/shaders/common.glsl', 0);
+      let file;
+      file = Gio.File.new_for_path( GLib.get_home_dir() + '/.local/share/cinnamon/extensions/'
+                                                  + UUID + '/resources/shaders/common.glsl' );
+      let [data, etag] =  file.load_bytes(null);
       let common = new TextDecoder().decode(data.get_data());
-      data = Gio.resources_lookup_data(path, 0);
+      file = Gio.File.new_for_path( GLib.get_home_dir() + '/.local/share/cinnamon/extensions/'
+                                                               + UUID + '/resources' + path );
+      [data, etag] = file.load_bytes(null);
       let code = new TextDecoder().decode(data.get_data());
-
-      //let common = utils.getStringResource('/shaders/common.glsl');
-      //let code   = utils.getStringResource(path);
 
       // Add a trailing newline. Else the GLSL compiler complains...
       return common + '\n' + code + '\n';

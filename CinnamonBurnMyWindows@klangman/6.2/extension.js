@@ -124,11 +124,6 @@ class BurnMyWindows {
          new Wisps.Effect(),
       ];
 
-      // Load all of our resources.
-      this._resources = Gio.Resource.load(GLib.get_home_dir() + 
-         '/.local/share/cinnamon/extensions/' + UUID + '/resources/burn-my-windows.gresource');
-      Gio.resources_register(this._resources);
-
       // Store a reference to the settings object.
       this._settings = new Settings.ExtensionSettings(this, this.meta.uuid);
 
@@ -217,12 +212,6 @@ class BurnMyWindows {
 
     // Free all effect resources.
     this._ALL_EFFECTS = [];
-
-    // Unregister our resources.
-    Gio.resources_unregister(this._resources);
-
-    // Disable the window-picking D-Bus API.
-    //this._windowPicker.unexport();
 
     global.window_manager.disconnect(this._killEffectsSignal);
 

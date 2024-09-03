@@ -69,7 +69,8 @@ var Effect = class Effect {
     this.shaderFactory = new ShaderFactory(Effect.getNick(), (shader) => {
       // Create the texture in the first call.
       if (!this._shardTexture) {
-        const shardData    = GdkPixbuf.Pixbuf.new_from_resource('/img/shards.png');
+        const shardData    = GdkPixbuf.Pixbuf.new_from_file( GLib.get_home_dir() +
+           '/.local/share/cinnamon/extensions/' + UUID + '/resources/img/shards.png');
         this._shardTexture = new Clutter.Image();
         this._shardTexture.set_data(shardData.get_pixels(), Cogl.PixelFormat.RGB_888,
                                     shardData.width, shardData.height,

@@ -14,8 +14,6 @@
 
 'use strict';
 
-//import * as utils from '../utils.js';
-
 // We import some modules only in the Shell process as they are not available in the
 // preferences process. They are used only in the creator function of the ShaderFactory
 // which is only called within GNOME Shell's process.

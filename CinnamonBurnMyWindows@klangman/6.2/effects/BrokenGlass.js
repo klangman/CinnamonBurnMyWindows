@@ -26,7 +26,6 @@ const Cogl = imports.gi.Cogl;
 const Gettext = imports.gettext;
 const GLib = imports.gi.GLib;
 
-//const _ = await utils.importGettext();
 const UUID = "CinnamonBurnMyWindows@klangman";
 
 Gettext.bindtextdomain(UUID, GLib.get_home_dir() + "/.local/share/locale");

@@ -68,7 +68,6 @@ class ShouldAnimateManager {
    }
 
    disconnect() {
-      log( "in disconnect" );
       for (let i=0 ; i<Main.wm._shouldAnimateManager.length ; i++) {
          if (Main.wm._shouldAnimateManager[i].owner == this._uuid) {
             Main.wm._shouldAnimateManager.splice( i, 1 );

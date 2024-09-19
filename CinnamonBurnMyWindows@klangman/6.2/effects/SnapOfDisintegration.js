@@ -80,7 +80,7 @@ var Effect = class Effect {
         // clang-format off
         shader.set_uniform_float(shader._uDustColor, 4, [c.red / 255, c.green / 255, c.blue / 255, c.alpha / 255]);
         shader.set_uniform_float(shader._uSeed,      2, [testMode ? 0 : Math.random(), testMode ? 0 : Math.random()]);
-        shader.set_uniform_float(shader._uDustScale, 1, [settings.get_double('snap-scale')]);
+        shader.set_uniform_float(shader._uDustScale, 1, [settings.getValue('snap-scale')]);
         // clang-format on
       });
 

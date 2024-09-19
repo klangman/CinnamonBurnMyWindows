@@ -105,18 +105,12 @@
             "Wisps": 20,
             "Randomized": 999,
             "None": 1000
-           }        },
+           }
+        },
         {"id": "application", "title": "Application",  "type": "string"}
     ],
     "tooltip": "A list of application with special effect rules",
-    "default" : [
-      {
-        "enabled": false,
-        "open": 0,
-        "close": 0,
-        "application": ""
-      }
-    ]
+    "default": []
   },
   "app-rules-button" : {
     "type" : "button",
@@ -408,6 +402,54 @@
      "step" : 10,
      "dependency" : "effect-selector=0",
      "default": 300
+  },
+
+  "broken-glass-scale": {
+     "type": "scale",
+     "description" : "Scale",
+     "min" : 0.2,
+     "max" : 5.0,
+     "step" : 0.01,
+     "dependency" : "effect-selector=1",
+     "default": 1
+  },
+
+  "broken-glass-gravity": {
+     "type": "scale",
+     "description" : "Gravity",
+     "min" : -2,
+     "max" : 2,
+     "step" : 0.01,
+     "dependency" : "effect-selector=1",
+     "default": 1
+  },
+
+  "broken-glass-blow-force": {
+     "type": "scale",
+     "description" : "Blow Force",
+     "min" : -2,
+     "max" : 2,
+     "step" : 0.01,
+     "dependency" : "effect-selector=1",
+     "default": 0.5
+  },
+
+  "broken-glass-use-pointer": {
+    "type" : "switch",
+    "description": "Shatter From Pointer Location",
+    "tooltip": "The shards will fly away from where your mouse pointer was when closing the window.",
+     "dependency" : "effect-selector=1",
+     "default": false
+  },
+
+  "broken-glass-animation-time": {
+     "type": "scale",
+     "description" : "Effect Duration (milliseconds)",
+     "min" : 100,
+     "max" : 10000,
+     "step" : 10,
+     "dependency" : "effect-selector=1",
+     "default": 1000
   },
 
   "doom-horizontal-scale": {

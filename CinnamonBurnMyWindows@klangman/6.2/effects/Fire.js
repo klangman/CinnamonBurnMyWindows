@@ -85,9 +85,9 @@ var Effect = class Effect {
         }
 
         // clang-format off
-        shader.set_uniform_float(shader._u3DNoise,       1, [settings.get_boolean('fire-3d-noise')]);
-        shader.set_uniform_float(shader._uScale,         1, [settings.get_double('fire-scale')]);
-        shader.set_uniform_float(shader._uMovementSpeed, 1, [settings.get_double('fire-movement-speed')]);
+        shader.set_uniform_float(shader._u3DNoise,       1, [settings.getValue('fire-3d-noise')]);
+        shader.set_uniform_float(shader._uScale,         1, [settings.getValue('fire-scale')]);
+        shader.set_uniform_float(shader._uMovementSpeed, 1, [settings.getValue('fire-movement-speed')]);
         // clang-format on
       });
     });

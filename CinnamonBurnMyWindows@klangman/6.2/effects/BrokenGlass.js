@@ -105,9 +105,9 @@ var Effect = class Effect {
           // clang-format off
           shader.set_uniform_float(shader._uSeed,       2, [testMode ? 0 : Math.random(), testMode ? 0 : Math.random()]);
           shader.set_uniform_float(shader._uEpicenter,  2, [epicenterX, epicenterY]);
-          shader.set_uniform_float(shader._uShardScale, 1, [settings.get_double('broken-glass-scale')]);
-          shader.set_uniform_float(shader._uBlowForce,  1, [settings.get_double('broken-glass-blow-force')]);
-          shader.set_uniform_float(shader._uGravity,    1, [settings.get_double('broken-glass-gravity')]);
+          shader.set_uniform_float(shader._uShardScale, 1, [settings.getValue('broken-glass-scale')]);
+          shader.set_uniform_float(shader._uBlowForce,  1, [settings.getValue('broken-glass-blow-force')]);
+          shader.set_uniform_float(shader._uGravity,    1, [settings.getValue('broken-glass-gravity')]);
           // clang-format on
         });
 
@@ -116,7 +116,8 @@ var Effect = class Effect {
       // called get_target() back then but this is not wrapped in GJS.
       // https://gitlab.gnome.org/GNOME/mutter/-/blob/gnome-3-36/clutter/clutter/clutter-offscreen-effect.c#L598
       shader.connect('update-animation', (shader) => {
-        const pipeline = shader.get_pipeline();
+        //const pipeline = shader.get_pipeline();
+        const pipeline = shader.get_target();
 
         // Use linear filtering for the window texture.
         pipeline.set_layer_filters(0, Cogl.PipelineFilter.LINEAR,

@@ -116,8 +116,7 @@ var Effect = class Effect {
       // called get_target() back then but this is not wrapped in GJS.
       // https://gitlab.gnome.org/GNOME/mutter/-/blob/gnome-3-36/clutter/clutter/clutter-offscreen-effect.c#L598
       shader.connect('update-animation', (shader) => {
-        //const pipeline = shader.get_pipeline();
-        const pipeline = shader.get_target();
+        const pipeline = shader.get_pipeline();
 
         // Use linear filtering for the window texture.
         pipeline.set_layer_filters(0, Cogl.PipelineFilter.LINEAR,

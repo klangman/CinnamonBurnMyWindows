@@ -65,6 +65,7 @@ var Effect = class Effect {
         this._dustTexture.set_data(dustData.get_pixels(), Cogl.PixelFormat.RGB_888,
                                    dustData.width, dustData.height, dustData.rowstride);
       }
+      log( `_dustTexture: ${this._dustTexture}` );
 
       // Store uniform locations of newly created shaders.
       shader._uDustTexture = shader.get_uniform_location('uDustTexture');
@@ -75,7 +76,7 @@ var Effect = class Effect {
       // Write all uniform values at the start of each animation.
       shader.connect('begin-animation', (shader, settings, forOpening, testMode) => {
         // The dust particles will fade to this color over time.
-        const c = Clutter.Color.from_string(settings.get_string('snap-color'))[1];
+        const c = Clutter.Color.from_string(settings.getValue('snap-color'))[1];
 
         // clang-format off
         shader.set_uniform_float(shader._uDustColor, 4, [c.red / 255, c.green / 255, c.blue / 255, c.alpha / 255]);

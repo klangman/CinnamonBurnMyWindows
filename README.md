@@ -36,6 +36,8 @@ The window shadows are not part of the animation and therefore they suddenly app
 - Doom
 - Energize A
 - Energize B
+- Fire
+- Focus
 - Glide
 - Glitch
 - Hexagon
@@ -53,33 +55,31 @@ The window shadows are not part of the animation and therefore they suddenly app
 Because Cinnamon is missing a required API, the following effects are disabled. I am hoping to find a way around this issue:
 
 - Broken Glass
-- Fire
 - Matrix
 - PaintBrush
 - Snap Of Disintegration
 - TRex Attack
-
-## Possible future enhancements
-
-- Specifying effects that can apply to specific application windows. i.e Selecting which effect occurs when closing Firefox.
 
 ## Installation
 
 At some point I will submit this extension to cinnamon-spices so you can install it directly from the desktop, but for now you need to manually install using these instructions:
 
 1. Clone the repo (or Download the latest repo by clinking on the green "code" button above then click "Download ZIP")
-    ```
-    git clone git@github.com:klangman/CinnamonBurnMyWindows.git
-    ```
+   
+   ```
+   git clone git@github.com:klangman/CinnamonBurnMyWindows.git
+   ```
 2. If you downloaded a ZIP, decompress the zip into a directory of your choice
-    ```
-    unzip ~/Downloads/CinnamonBurnMyWindows-main.zip
-    ```
+   
+   ```
+   unzip ~/Downloads/CinnamonBurnMyWindows-main.zip
+   ```
 3. Change directory to the cloned repo or the decompressed ZIP file
 4. Link the "CinnamonBurnMyWindows@klangman" directory into the "~/.local/share/cinnamon/extensions/" directory
-    ```
-    ln -s $PWD/CinnamonBurnMyWindows@klangman ~/.local/share/cinnamon/extensions/CinnamonBurnMyWindows@klangman
-    ```
+   
+   ```
+   ln -s $PWD/CinnamonBurnMyWindows@klangman ~/.local/share/cinnamon/extensions/CinnamonBurnMyWindows@klangman
+   ```
 5. Open the Cinnamon Extensions application (Menu->Preferences->Extensions)
 6. Select the "Burn My Windows" entry and then click the "+" button at the bottom of the Extensions window
 7. Use the "gears" icon to open the CinnamonBurnMyWindows setting window and setup your preferred behaviour
@@ -90,7 +90,7 @@ Feel free to create an issue here on Github to give me feedback or to report any
 **Please DO NOT open any issues against the original Gnome project. Open an issue here so I can check if the issue has anything to do with my changes to support Cinnamon**
 
 If you like this extension, please consider making a donation to the author of the original Gnome extension which makes up the vast majority of the code for this Cinnamon extension. Donation links can be found on his Github page:
- 
+
 https://github.com/Schneegans/Burn-My-Windows
 
 If you want to help others find this Cinnamon extension, consider staring it so that more people might learn of it's existence.

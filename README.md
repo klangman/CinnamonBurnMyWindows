@@ -62,26 +62,32 @@ Because Cinnamon is missing a required API, the following effects are disabled. 
 
 ## Installation
 
-At some point I will submit this extension to cinnamon-spices so you can install it directly from the desktop, but for now you need to manually install using these instructions:
+I have also committed this extension to cinnamon-spices so you can install it directly from the Cinnamon desktop "Extension" setting application. but if you want the most cutting edge version from this repo you need to manually install using these instructions:
 
 1. Clone the repo (or Download the latest repo by clinking on the green "code" button above then click "Download ZIP")
    
    ```
    git clone git@github.com:klangman/CinnamonBurnMyWindows.git
    ```
+
 2. If you downloaded a ZIP, decompress the zip into a directory of your choice
    
    ```
    unzip ~/Downloads/CinnamonBurnMyWindows-main.zip
    ```
+
 3. Change directory to the cloned repo or the decompressed ZIP file
+
 4. Link the "CinnamonBurnMyWindows@klangman" directory into the "~/.local/share/cinnamon/extensions/" directory
    
    ```
    ln -s $PWD/CinnamonBurnMyWindows@klangman ~/.local/share/cinnamon/extensions/CinnamonBurnMyWindows@klangman
    ```
+
 5. Open the Cinnamon Extensions application (Menu->Preferences->Extensions)
+
 6. Select the "Burn My Windows" entry and then click the "+" button at the bottom of the Extensions window
+
 7. Use the "gears" icon to open the CinnamonBurnMyWindows setting window and setup your preferred behaviour
 
 ## Feedback

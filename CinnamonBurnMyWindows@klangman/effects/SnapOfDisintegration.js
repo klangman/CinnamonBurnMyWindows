@@ -65,7 +65,6 @@ var Effect = class Effect {
         this._dustTexture.set_data(dustData.get_pixels(), Cogl.PixelFormat.RGB_888,
                                    dustData.width, dustData.height, dustData.rowstride);
       }
-      log( `_dustTexture: ${this._dustTexture}` );
 
       // Store uniform locations of newly created shaders.
       shader._uDustTexture = shader.get_uniform_location('uDustTexture');

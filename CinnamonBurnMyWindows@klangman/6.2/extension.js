@@ -332,13 +332,15 @@ class BurnMyWindows {
     if (!app) {
       app = this._windowTracker.get_app_from_pid(metaWindow.get_pid());
     }
+    let appID = null;
     if (app && !app.is_window_backed()) {
-      let appID = app.get_id();
-      let appRules = this._settings.getValue("app-rules");
-      for( let i=0 ; i < appRules.length ; i++ ) {
-        if (appRules[i].enabled && appRules[i].application == appID) {
-          return(appRules[i]);
-        }
+      appID = app.get_id();
+    }
+    let wmClass = metaWindow.get_wm_class();
+    let appRules = this._settings.getValue("app-rules");
+    for( let i=0 ; i < appRules.length ; i++ ) {
+      if (appRules[i].enabled && ((appID && appRules[i].application == appID) || (appRules[i].application == wmClass))) {
+        return(appRules[i]);
       }
     }
     return(null);

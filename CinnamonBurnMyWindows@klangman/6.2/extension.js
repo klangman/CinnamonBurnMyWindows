@@ -153,7 +153,7 @@ class BurnMyWindows {
 
       // Intercept _shouldAnimate() for Window Map/Destroy events
       this.shouldAnimateManager = new ShouldAnimateManager.ShouldAnimateManager( UUID );
-      let error = this.shouldAnimateManager.connect(ShouldAnimateManager.Events.MapWindow+ShouldAnimateManager.Events.DestroyWindow,
+      let error = this.shouldAnimateManager.connect(ShouldAnimateManager.Events.MapWindow+ShouldAnimateManager.Events.DestroyWindow/*+ShouldAnimateManager.Events.Minimize+ShouldAnimateManager.Events.Unminimize*/,
          function(actor, types, event) {
             // If there is an applicable effect profile, we intercept the ease() method to
             // setup our own effect.
@@ -163,11 +163,15 @@ class BurnMyWindows {
                // Store the original ease() method of the actor.
                const orig = actor.ease;
 
-               // Temporarily force the new window & closing window effect to be enabled in cinnamon
+               // Temporarily force the new window, closing window & minimize effect to be enabled in cinnamon
                let orig_desktop_effects_map_type = Main.wm.desktop_effects_map_type;
                let orig_desktop_effects_close_type = Main.wm.desktop_effects_close_type;
+               let orig_desktop_effects_minimize_type = Main.wm.desktop_effects_minimize_type;
                Main.wm.desktop_effects_map_type = "traditional";
                Main.wm.desktop_effects_close_type = "traditional";
+               Main.wm.desktop_effects_minimize_type = "traditional";
+
+               let actorX = actor.x; // Record the windows current X position before Cinnamon mucks with it's position
 
                // Now intercept the next call to actor.ease().
                actor.ease = function(...params) {
@@ -182,22 +186,30 @@ class BurnMyWindows {
                   // ease() method. See also:
                   // https://github.com/Schneegans/Burn-My-Windows/issues/335
                   const stack      = (new Error()).stack;
-                  const forClosing = stack.includes('_destroyWindow@');
-                  const forOpening = stack.includes('_mapWindow@');
+                  const forClosing = stack.includes('_destroyWindow@') || stack.includes('_minimizeWindow@');
+                  const forOpening = stack.includes('_mapWindow@') || stack.includes('_unminimizeWindow@');
+
+                  if (event === ShouldAnimateManager.Events.MapWindow) {
+                     // Currently the Cinnamon _mapWindow() path taken when using "traditional" animation is setting "actor.x-=1",
+                     // so we need to undue that to make sure the window does not jump one pixel to the right after the effect.
+                     // We try to take care of possible future Cinnamon changes by using the pre-animation X value
+                     actor.set_x(actorX);
+                  }
 
                   if (forClosing || forOpening) {
                     // Quickly restore the original behavior. Nobody noticed, I guess :D
                     actor.ease = orig;
 
                     // And then create the effect!
-                    extensionThis._setupEffect(actor, forOpening, chosenEffect.effect,
+                    extensionThis._setupEffect(actor, event, chosenEffect.effect,
                                                chosenEffect.profile);
                   } else {
                     orig.apply(this, params);
                   }
-                  // Restore the original cinnamon new window & closing window effect settings
+                  // Restore the original cinnamon new window, closing window & minimize effect settings
                   Main.wm.desktop_effects_map_type = orig_desktop_effects_map_type;
-                  Main.wm.desktop_effects_close_type = orig_desktop_effects_close_type
+                  Main.wm.desktop_effects_close_type = orig_desktop_effects_close_type;
+                  Main.wm.desktop_effects_minimize_type = orig_desktop_effects_minimize_type;
              };
 
              return true;
@@ -348,8 +360,8 @@ class BurnMyWindows {
 
   // This method adds the given effect using the settings from the given profile to the
   // given actor.
-  _setupEffect(actor, forOpening, effect, profile) {
-
+  _setupEffect(actor, event, effect, profile) {
+    let forOpening = (event & ShouldAnimateManager.Events.MapWindow) || (event & ShouldAnimateManager.Events.Unminimize);
     // There is the weird case where an animation is already ongoing. This happens when a
     // window is closed which has been created before the session was started (e.g. when
     // GNOME Shell has been restarted in the meantime).
@@ -413,10 +425,19 @@ class BurnMyWindows {
       // should have been called by the original ease() methods.
       // https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/main/js/ui/windowManager.js#L1487
       // https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/main/js/ui/windowManager.js#L1558.
-      if (forOpening) {
-        Main.wm._mapWindowDone(global.window_manager, actor);
-      } else {
-        Main.wm._destroyWindowDone(global.window_manager, actor);
+      switch (event) {
+         case ShouldAnimateManager.Events.MapWindow:
+            Main.wm._mapWindowDone(global.window_manager, actor);
+            break;
+         case ShouldAnimateManager.Events.DestroyWindow:
+            Main.wm._destroyWindowDone(global.window_manager, actor);
+            break;
+         case ShouldAnimateManager.Events.Minimize:
+            Main.wm._minimizeWindowDone(global.window_manager, actor);
+            break;
+         case ShouldAnimateManager.Events.Unminimize:
+            Main.wm._unminimizeWindowDone(global.window_manager, actor);
+            break;
       }
     });
 

@@ -20,13 +20,14 @@ This extension needs the Cinnamon.GLSLEffect class which is only available in Ci
 
 1. In the setting configure window under the "Effect Settings" tab, when changing the "Show setting for effect" drop-down to select a different effect, sometimes the contents under the "Effect Specific Settings" title will not properly update. Because of this, only a subset of the available options are visible. I believe this is a Cinnamon bug. You can force Cinnamon to properly redraw the options by selecting the "General" tab then returning to the "Effect Settings" tab again. After that, the complete set of "Effect Specific Settings" should be visible.
 2. When closing the Steam Client "setting" window the 'close window effect' does not show the windows contents, resulting in the closing effect to show where the window had existed but otherwise has no negative effect.
-3. When running VirtualBox, some actions (like restarting Cinnamon or changing panel hide settings) will show a full screen animation of both the Open and Close effect. I assume this is caused by some weirdness with how VirtualBox was written. The problem can be avoided by using two "Application specific settings" list entries to disable open/close animations for the "VirtualBox" and "VirtualBoxVM" WM_CLASS names (entered under the "Application" entry box). New installs of this extension will have these entries by default, but installs that are upgraded to the latest version my need to manually enter these app rules to avoid the issues.
+3. (Fixed via work-around) When running VirtualBox, some actions (like restarting Cinnamon or changing panel hide settings) will show a full screen animation of both the Open and Close effect. I assume this is caused by some weirdness with how VirtualBox was written. The problem can be avoided by using two "Application specific settings" list entries to disable open/close animations for the "VirtualBox" and "VirtualBoxVM" WM_CLASS names (entered under the "Application" entry box). New installs of this extension will have these entries by default, but installs that are upgraded to the latest version my need to manually enter these app rules to avoid the issues.
 4. The Doom open effect seems to finish animating at a noticeably lower position than where the window is actually located. This results in the sudden jump up after the animation is completed. When used as a close effect it works correctly.
 5. The window shadows are not part of the animation and therefore they suddenly appear or disappear right after or before the animation.
 
 ### Currently these effects are working in Cinnamon:
 
 - Apparition
+- Aura Glow  (new)
 - Doom
 - Energize A
 - Energize B
@@ -36,10 +37,13 @@ This extension needs the Cinnamon.GLSLEffect class which is only available in Ci
 - Glitch
 - Hexagon
 - Incinerate
+- Mushroom  (new)
 - Pixelate
 - Pixel Wheel
 - Pixel Wipe
 - Portal
+- RGB Warp  (new)
+- Team Rocket  (new)
 - TV Effect
 - TV Glitch
 - Wisps
@@ -61,7 +65,7 @@ I have also committed this extension to cinnamon-spices so you can install it di
 1. Clone the repo (or Download the latest repo by clinking on the green "code" button above then click "Download ZIP")
    
    ```
-   git clone git@github.com:klangman/CinnamonBurnMyWindows.git
+   git clone https://github.com/klangman/CinnamonBurnMyWindows.git
    ```
 
 2. If you downloaded a ZIP, decompress the zip into a directory of your choice

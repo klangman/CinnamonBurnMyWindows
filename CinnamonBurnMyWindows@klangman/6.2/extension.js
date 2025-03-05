@@ -28,6 +28,7 @@ const Glide = require('./effects/Glide.js');
 const Glitch = require('./effects/Glitch.js');
 const Hexagon = require('./effects/Hexagon.js');
 const Incinerate = require('./effects/Incinerate.js');
+const MagicLamp = require('./effects/MagicLamp.js');
 const Matrix = require('./effects/Matrix.js');
 const Mushroom = require('./effects/Mushroom.js');
 const PaintBrush = require('./effects/PaintBrush.js');
@@ -69,6 +70,7 @@ const Effect = {
   Glitch:      {idx: 7,  name: "Glitch"},
   Hexagon:     {idx: 8,  name: "Hexagon"},
   Incinerate:  {idx: 9,  name: "Incinerate"},
+  MagicLamp:   {idx: 26, name: "MagicLamp"},
   Mushroom:    {idx: 25, name: "Mushroom"},
   //Matrix:      {idx: 10, name: "Matrix"},
   //PaintBrush:  {idx: 11, name: "Paint Brush"},
@@ -162,6 +164,7 @@ class BurnMyWindows {
          new TeamRocket.Effect(),
          new RGBWarp.Effect(),
          new Mushroom.Effect(this._signalManager, this._settings),
+         new MagicLamp.Effect(),
       ];
 
       // We will use extensionThis to refer to the extension inside the patched methods.
@@ -323,8 +326,7 @@ class BurnMyWindows {
             // so we need to undue these changes to make sure the window animates to to correct window position.
             // We use the actors pre-ease values so that we have a good chance of being right even if Cinnamon
             // makes further changes in future releases.
-            actor.set_x(actorX);
-            actor.set_y(actorY);
+            actor.set_position(actorX, actorY);
          }
          //if (chosenEffect.effect instanceof Doom.Effect && (event === ShouldAnimateManager.Events.MapWindow || event === ShouldAnimateManager.Events.Unminimize)) {
             // Hack fix for Doom, not sure why I need to move the window in this way,
@@ -510,7 +512,7 @@ class BurnMyWindows {
     }
 
     // Now add a cool shader to our window actor!
-    const shader = effect.shaderFactory.getShader();
+    const shader = effect.shaderFactory.getShader(event);
     actor.add_effect_with_name('burn-my-windows-effect', shader);
 
     // At the end of the animation, we restore the scale of the overview clone (if any)

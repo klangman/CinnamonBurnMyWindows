@@ -1,7 +1,7 @@
 {
   "layout" : {
     "type" : "layout",
-    "pages" : ["general-page", "effects-page", "application-page", "random-page"],
+    "pages" : ["general-page", "effects-page", "application-page", "random-page", "about-page"],
 
     "general-page" : {
       "type" : "page",
@@ -22,6 +22,11 @@
       "type" : "page",
       "title" : "Random Effects",
       "sections" : ["random-section"]
+    },
+    "about-page" : {
+      "type" : "page",
+      "title" : "About",
+      "sections" : ["about-section"]
     },
 
     "general-settings" : {
@@ -55,6 +60,7 @@
                 "glitch-scale", "glitch-strength", "glitch-speed", "glitch-color", "glitch-animation-time",
                 "hexagon-scale", "hexagon-line-width", "hexagon-line-color", "hexagon-glow-color", "hexagon-additive-blending", "hexagon-animation-time",
                 "incinerate-scale", "incinerate-turbulence", "incinerate-color", "incinerate-use-pointer", "incinerate-animation-time",
+                "magiclamp-effect", "magiclamp-x-tiles", "magiclamp-y-tiles", "magiclamp-animation-time",
                 "mushroom-presets", "mushroom-animation-time",
                 "pixelate-noise", "pixelate-pixel-size", "pixelate-animation-time",
                 "pixel-wheel-spoke-count", "pixel-wheel-pixel-size", "pixel-wheel-animation-time",
@@ -82,7 +88,17 @@
       "type" : "section",
       "title" : "Effects included in the randomized sets:",
       "keys" : ["random-include"]
+    },
+    "about-section" : {
+      "type" : "section",
+      "title" : "About Cinnamon Burn-My-Windows",
+      "keys" : ["about-text"]
     }
+  },
+
+  "about-text": {
+     "type" : "label",
+     "description" : "Ported to Cinnamon by Kevin Langman\nGithub: https://github.com/klangman/CinnamonBurnMyWindows\n\nBased on the Burn-My-Windows code by Schneegans and contributors\nGithub: https://github.com/Schneegans/Burn-My-Windows\n\nThe Magic Lamp Effect is ported from code by hermes83\nGitHub: https://github.com/hermes83/compiz-alike-magic-lamp-effect"
   },
 
   "app-rules": {
@@ -102,6 +118,7 @@
             "Glitch": 7,
             "Hexagon": 8,
             "Incinerate": 9,
+            "Magic Lamp": 26,
             "Mushroom": 25,
             "Pixelate": 12,
             "Pixel Wheel": 13,
@@ -128,6 +145,7 @@
             "Glitch": 7,
             "Hexagon": 8,
             "Incinerate": 9,
+            "Magic Lamp": 26,
             "Mushroom": 25,
             "Pixelate": 12,
             "Pixel Wheel": 13,
@@ -154,6 +172,7 @@
             "Glitch": 7,
             "Hexagon": 8,
             "Incinerate": 9,
+            "Magic Lamp": 26,
             "Mushroom": 25,
             "Pixelate": 12,
             "Pixel Wheel": 13,
@@ -180,6 +199,7 @@
             "Glitch": 7,
             "Hexagon": 8,
             "Incinerate": 9,
+            "Magic Lamp": 26,
             "Mushroom": 25,
             "Pixelate": 12,
             "Pixel Wheel": 13,
@@ -271,6 +291,7 @@
       "Glitch": 7,
       "Hexagon": 8,
       "Incinerate": 9,
+      "Magic Lamp": 26,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -300,6 +321,7 @@
       "Glitch": 7,
       "Hexagon": 8,
       "Incinerate": 9,
+      "Magic Lamp": 26,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -331,6 +353,7 @@
       "Glitch": 7,
       "Hexagon": 8,
       "Incinerate": 9,
+      "Magic Lamp": 26,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -369,6 +392,7 @@
       "Glitch": 7,
       "Hexagon": 8,
       "Incinerate": 9,
+      "Magic Lamp": 26,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -401,6 +425,7 @@
       "Glitch": 7,
       "Hexagon": 8,
       "Incinerate": 9,
+      "Magic Lamp": 26,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -433,6 +458,7 @@
       "Glitch": 7,
       "Hexagon": 8,
       "Incinerate": 9,
+      "Magic Lamp": 26,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -464,6 +490,7 @@
       "Glitch": 7,
       "Hexagon": 8,
       "Incinerate": 9,
+      "Magic Lamp": 26,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -1017,6 +1044,55 @@
      "dependency" : "effect-selector=9",
      "default": 2000
   },
+
+
+  "magiclamp-effect": {
+    "type": "combobox",
+    "default": 0,
+    "options": {
+      "default": 0,
+      "sine": 1,
+      "random": 2,
+      "Minimize: Default - Unminimize: Sine": 3,
+      "Minimize: Sine - Unminimize: Default": 4
+    },
+    "description": "The type of effect",
+    "dependency" : "effect-selector=26",
+    "tooltip": "Using 'default' will result in a curved effect where using 'sine' will result in a more wavy effect"
+  },
+
+  "magiclamp-x-tiles": {
+    "type": "scale",
+    "default": 20,
+    "min": 3,
+    "max": 50,
+    "step": 1,
+    "description": "X Tiles",
+    "dependency" : "effect-selector=26",
+    "tooltip": "This effects the quality and the cost of the animation"
+  },
+
+  "magiclamp-y-tiles": {
+    "type": "scale",
+    "default": 20,
+    "min": 3,
+    "max": 50,
+    "step": 1,
+    "description": "Y Tiles",
+    "dependency" : "effect-selector=26",
+    "tooltip": "This effects the quality and the costs of the animation"
+  },
+
+  "magiclamp-animation-time": {
+     "type": "scale",
+     "description" : "Effect Duration (milliseconds)",
+     "min" : 100,
+     "max" : 3000,
+     "step" : 10,
+     "dependency" : "effect-selector=26",
+     "default": 1200
+  },
+
 
   "matrix-scale": {
      "type": "generic",

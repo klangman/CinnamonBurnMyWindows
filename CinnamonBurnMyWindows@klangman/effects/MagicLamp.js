@@ -279,7 +279,6 @@ class AbstractCommonMagicLampEffect extends Clutter.DeformEffect {
             actor.disconnect(this.paintEvent);
             this.paintEvent = null;
          }
-         //actor.remove_effect(this);
 
          this.destroy_actor(actor);
       }
@@ -398,9 +397,6 @@ class MagicLampMinimizeEffect extends AbstractCommonMagicLampEffect {
       } else if (this.EFFECT === EffectType.SineDefault) {
             this.EFFECT = EffectType.Sine;
       }
-      // Need to wait for the unfocus of the window to occur before we start animating, an attempt to fix some strange flashing at the start of the animation
-      //this._beginWithoutFocus(0, actor);
-
       this.set_n_tiles(this.X_TILES, this.Y_TILES);
       this.timerId = new Clutter.Timeline({ duration: this.DURATION + (this.monitor.width * this.monitor.height) / (this.window.width * this.window.height) });
       this.newFrameEvent = this.timerId.connect('new-frame', this.on_tick_elapsed.bind(this));
@@ -410,26 +406,6 @@ class MagicLampMinimizeEffect extends AbstractCommonMagicLampEffect {
       Meta.disable_unredirect_for_display(global.display);
       global.begin_work();
    }
-
-   /*
-   _beginWithoutFocus(attempts, actor) {
-      if (attempts<10) {
-         let focus = global.display.get_focus_window();
-         let window = actor.meta_window;
-         if (window === focus) {
-            log( "waiting for the loss of focus" );
-            Mainloop.timeout_add(100, () => this._beginWithoutFocus(attempts+1, actor));
-         }
-      }
-      this.set_n_tiles(this.X_TILES, this.Y_TILES);
-      this.timerId = new Clutter.Timeline({ duration: this.DURATION + (this.monitor.width * this.monitor.height) / (this.window.width * this.window.height) });
-      this.newFrameEvent = this.timerId.connect('new-frame', this.on_tick_elapsed.bind(this));
-      this.completedEvent = this.timerId.connect('completed', this.destroy.bind(this));
-      this.timerId.start();
-      // Make sure that no fullscreen window is drawn over our animations.
-      Meta.disable_unredirect_for_display(global.display);
-      global.begin_work();
-   }*/
 
    // This will stop any running animation and emit the end-animation signal.
    endAnimation() {

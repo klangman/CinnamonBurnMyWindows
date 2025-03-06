@@ -305,20 +305,6 @@ class BurnMyWindows {
 
       // Now intercept the next call to actor.ease().
       actor.ease = function(...params) {
-         // There is a really weird issue in GNOME Shell 44: A few non-GTK windows are
-         // resized directly after they are mapped on X11. This happens for instance
-         // for keepassxc after it was closed in the maximized state. As the
-         // _mapWindow() method is called asynchronously, the window is not yet visible
-         // when the resize happens. Hence, our ease-override is called for the resize
-         // animation instead of the window-open or window-close animation. This is not
-         // what we want. So we check again whether the ease() call is for the
-         // window-open or window-close animation. If not, we just call the original
-         // ease() method. See also:
-         // https://github.com/Schneegans/Burn-My-Windows/issues/335
-         const stack      = (new Error()).stack;
-         const forClosing = stack.includes('_destroyWindow@') || stack.includes('_minimizeWindow@');
-         const forOpening = stack.includes('_mapWindow@') || stack.includes('_unminimizeWindow@');
-
          if (event === ShouldAnimateManager.Events.MapWindow || event === ShouldAnimateManager.Events.Unminimize) {
             // When using "traditional" animation in Cinnamon (which we are forcing to be the case):
             //    _mapWindow() is setting "actor.x-=1"
@@ -334,16 +320,12 @@ class BurnMyWindows {
             //actor.set_y(actor.y-32);
          //}
 
-         if (forClosing || forOpening) {
-           // Quickly restore the original behavior. Nobody noticed, I guess :D
-           actor.ease = orig;
+         // Quickly restore the original behavior. Nobody noticed, I guess :D
+         actor.ease = orig;
 
-           // And then create the effect!
-           extensionThis._setupEffect(actor, event, chosenEffect.effect,
-                                      chosenEffect.profile);
-         } else {
-           orig.apply(this, params);
-         }
+         // And then create the effect!
+         extensionThis._setupEffect(actor, event, chosenEffect.effect, chosenEffect.profile);
+
          // Restore the original cinnamon new window, closing window & minimize effect settings
          Main.wm.desktop_effects_map_type = orig_desktop_effects_map_type;
          Main.wm.desktop_effects_close_type = orig_desktop_effects_close_type;

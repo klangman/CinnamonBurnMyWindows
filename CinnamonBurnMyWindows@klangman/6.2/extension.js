@@ -70,7 +70,7 @@ const Effect = {
   Glitch:      {idx: 7,  name: "Glitch"},
   Hexagon:     {idx: 8,  name: "Hexagon"},
   Incinerate:  {idx: 9,  name: "Incinerate"},
-  MagicLamp:   {idx: 26, name: "MagicLamp"},
+  MagicLamp:   {idx: 26, name: "Magic Lamp"},
   Mushroom:    {idx: 25, name: "Mushroom"},
   //Matrix:      {idx: 10, name: "Matrix"},
   //PaintBrush:  {idx: 11, name: "Paint Brush"},

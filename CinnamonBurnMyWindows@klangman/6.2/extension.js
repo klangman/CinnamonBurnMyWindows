@@ -55,6 +55,7 @@ const Settings = imports.ui.settings;
 const MessageTray = imports.ui.messageTray;
 const St = imports.gi.St;
 const Cinnamon = imports.gi.Cinnamon;
+const Util = imports.misc.util;
 const SignalManager = imports.misc.signalManager;
 
 const Effect = {
@@ -133,6 +134,8 @@ class BurnMyWindows {
       // Create the settings and signal manager
       this._settings = new Settings.ExtensionSettings(this, this.meta.uuid)
       this._signalManager = new SignalManager.SignalManager(null);
+      // Save the version number to the settings so that the About page can read it (is there a better way?)
+      this._settings.setValue("ext-version", this.meta.version);
 
       // Effects in this array must be ordered by effect number as defined by the setting-schema.json.
       // New effects will be added in alphabetical order in the UI list, but the effect number, and
@@ -170,10 +173,9 @@ class BurnMyWindows {
       // We will use extensionThis to refer to the extension inside the patched methods.
       extensionThis = this;
 
-      // Store a reference to the settings object.
+      // Settings connections to connect to the mimimize/unminimize events when required
       this._settings.bind("minimize-effect", "minimizeEffect", this._enableMinimizeEffects);
       this._settings.bind("unminimize-effect", "unminimizeEffect", this._enableMinimizeEffects);
-      //this._settings.bind("app-rules", "appRules", this._enableMinimizeEffects);
 
       // Keep track of the previously focused Application
       this._signalManager.connect(global.display, "notify::focus-window", this._onFocusChanged, this);
@@ -201,7 +203,7 @@ class BurnMyWindows {
       // This call will only connect to minimize/unminimize events if needed, that way MagicLampEffect can still work if it's installed
       this._enableMinimizeEffects();
 
-      // Make sure to remove any effects if requested by the window manager. (is this Gnome specific?)
+      // Make sure to remove any effects if requested by the window manager.
       this._killEffectsSignal = global.window_manager.connect('kill-window-effects', (wm, actor) => {
          const shader = actor.get_effect('burn-my-windows-effect');
          if (shader) {
@@ -442,6 +444,10 @@ class BurnMyWindows {
       appID = app.get_id();
     }
     let wmClass = metaWindow.get_wm_class();
+    if (wmClass == "CinnamonBurnMyWindowsTest.py") {
+       let selectedEffect = this._settings.getValue("effect-selector");
+       return {open: selectedEffect, close: selectedEffect, minimize: selectedEffect, unminimize: selectedEffect};
+    }
     let appRules = this._settings.getValue("app-rules");
     for( let i=0 ; i < appRules.length ; i++ ) {
       if (appRules[i].enabled && ((appID && appRules[i].application == appID) || (appRules[i].application == wmClass))) {
@@ -580,6 +586,11 @@ class BurnMyWindows {
     }
   }
 
+  on_test_button_pressed() {
+    let command = GLib.get_home_dir() + "/.local/share/cinnamon/extensions/" + UUID + "/CinnamonBurnMyWindowsTest";
+    Util.spawnCommandLineAsync(command);
+  }
+
 }
 
 let extension = null;
@@ -602,6 +613,9 @@ function init(metadata) {
 
 const Callbacks = {
   on_config_button_pressed: function() {
-     extension.on_config_button_pressed()
+     extension.on_config_button_pressed();
+  },
+  on_test_button_pressed: function() {
+     extension.on_test_button_pressed();
   }
 }

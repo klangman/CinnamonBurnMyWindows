@@ -88,7 +88,7 @@
     "random-section" : {
       "type" : "section",
       "title" : "Effects included in the randomized sets:",
-      "keys" : ["random-include"]
+      "keys" : ["random-include", "random-buttons"]
     },
     "about-section" : {
       "type" : "section",

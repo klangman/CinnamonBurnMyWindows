@@ -212,28 +212,27 @@ class BurnMyWindows {
       });
   }
 
-  // This function will ensure that all the effects are defined in the "random_include" list.
-  // After an upgrade, new effects might have been added, in which case we would need to add new
-  // List entries to "random_include" for the new effect(s). This function assumes that only
-  // new effect changes can occur, no removal or renaming is allowed. It also assumes that the
-  // Effect const and the "random-include" setting are both in alphabetical order.
+  // This function will rebuild the "random-include" list. After an upgrade,
+  // the Effect const might have differences that need to be reflected in the
+  // "random-include" List. New effects will be added (all options enabled)
+  // and retired effects will be removed. Unchanged effects will retain existing
+  // settings.
   _upgradeRandomIncludeEffects() {
      let randomInclude =  this._settings.getValue("random-include");
+     let newRandomInclude = [];
      let effects = Object.entries(Effect);
-     if (randomInclude.length != effects.length) {
-        let newRandomInclude = [];
-        let i = 0;
-        for (let ei=0 ; ei < effects.length ; ei++) {
-           if (i < randomInclude.length && randomInclude[i].name == effects[ei][1].name) {
-              newRandomInclude.push(randomInclude[i]);
-              i++;
+
+     for (let i=0 ; i < effects.length ; i++) {
+        if (effects[i][1].idx < 900) {// An idx of 900 or higher is reserved for non-effect types, i.e. None and Random
+           let element = randomInclude.find((element) => element.name == effects[i][1].name);
+           if (element) {
+              newRandomInclude.push(element);
            } else {
-              if (effects[ei][1].idx < 900) // idx of 900 or higher is reserved for non-effect types, i.e. None and Random
-                 newRandomInclude.push( {name: effects[ei][1].name, open: true, close: true, minimize: true, unminimize: true} );
+              newRandomInclude.push( {name: effects[i][1].name, open: true, close: true, minimize: true, unminimize: true} );
            }
         }
-        this._settings.setValue("random-include", newRandomInclude);
      }
+     this._settings.setValue("random-include", newRandomInclude);
   }
 
   // Try to enable the Minimize/Unminimize event connection if there is a need

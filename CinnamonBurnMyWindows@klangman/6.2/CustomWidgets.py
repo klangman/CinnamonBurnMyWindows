@@ -294,24 +294,17 @@ class SetClearButtons(SettingsWidget):
 
    def _on_set_button_clicked(self, *args):
       lst = self.settings.get_value("random-include")
-      print( f"Before:\n{lst}" )
+      newList = []
       for element in lst:
-         element["open"] = True
-         element["close"] = True
-         element["minimize"] = True
-         element["unminimize"] = True
-      print( f"After:\n{lst}" )
-      self.settings.set_value("random-include", lst);
-      print( "value was set!" )
+         newList.append( {"name": element["name"], "open": True, "close": True, "minimize": True, "unminimize": True} )
+      self.settings.set_value("random-include", newList)
 
    def _on_clear_button_clicked(self, *args):
       lst = self.settings.get_value("random-include")
+      newList = []
       for element in lst:
-         element["open"] = False
-         element["close"] = False
-         element["minimize"] = False
-         element["unminimize"] = False
-      self.settings.set_value("random-include", lst);
+         newList.append( {"name": element["name"], "open": False, "close": False, "minimize": False, "unminimize": False} )
+      self.settings.set_value("random-include", newList)
 
 
 # This is based on the Range class that handles the "scale" type. It's modified so that it fits on one line

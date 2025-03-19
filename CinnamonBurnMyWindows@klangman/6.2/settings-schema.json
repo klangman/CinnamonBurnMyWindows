@@ -54,7 +54,7 @@
                 "doom-horizontal-scale", "doom-vertical-scale", "doom-pixel-size", "doom-animation-time", "doom-reset",
                 "energize-a-scale", "energize-a-color", "energize-a-animation-time", "energize-a-reset",
                 "energize-b-scale", "energize-b-color", "energize-b-animation-time", "energize-b-reset",
-                "fire-presets", "fire-3d-noise", "fire-animation-time", "fire-reset",
+                "fire-presets", "fire-3d-noise", "fire-random-color", "fire-animation-time", "fire-reset",
                 "focus-blur-amount", "focus-blur-quality", "focus-animation-time", "focus-reset",
                 "glide-scale", "glide-squish", "glide-tilt", "glide-shift", "glide-animation-time", "glide-reset",
                 "glitch-scale", "glitch-strength", "glitch-speed", "glitch-color", "glitch-animation-time", "glitch-reset",
@@ -839,9 +839,10 @@
       "Dark and Smutty" : "Dark and Smutty",
       "Cold Breeze" : "Cold Breeze",
       "Santa is Coming" : "Santa is Coming",
+      "Nuclear" : "Nuclear",
       "Custom" : "Custom"
     },
-    "description": "Fire preset",
+    "description": "Fire Preset",
     "dependency" : "effect-selector=5"
   },
 
@@ -873,6 +874,14 @@
     "type" : "switch",
     "description": "Fire 3D Noise",
     "tooltip": "Creates a more dynamic fire but requires more GPU power.",
+    "dependency" : "effect-selector=5",
+    "default": false
+  },
+
+  "fire-random-color": {
+    "type" : "switch",
+    "description": "Use a Random Color (overrides other color settings)",
+    "tooltip": "Use a random fire color. This setting will override any preset or custom colors settings you select.",
     "dependency" : "effect-selector=5",
     "default": false
   },
@@ -1355,7 +1364,7 @@
       "Sparkle" : "Sparkle",
       "Custom" : "Custom"
     },
-    "description": "Mushroom preset",
+    "description": "Mushroom Preset",
     "dependency" : "effect-selector=25"
   },
 

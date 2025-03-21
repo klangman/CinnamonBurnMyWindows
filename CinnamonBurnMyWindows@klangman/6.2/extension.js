@@ -313,13 +313,14 @@ class BurnMyWindows {
             // so we need to undue these changes to make sure the window animates to to correct window position.
             // We use the actors pre-ease values so that we have a good chance of being right even if Cinnamon
             // makes further changes in future releases.
-            actor.set_position(actorX, actorY);
+            if (chosenEffect.effect instanceof Doom.Effect) {
+               // Hack fix for Doom, not sure why I need to move the window in this way,
+               // but it does not effect the resulting Y location of the window after animation
+               actor.set_position(actorX, actorY+extensionThis._settings.getValue("doom-y-hack"));
+            } else {
+               actor.set_position(actorX, actorY);
+            }
          }
-         //if (chosenEffect.effect instanceof Doom.Effect && (event === ShouldAnimateManager.Events.MapWindow || event === ShouldAnimateManager.Events.Unminimize)) {
-            // Hack fix for Doom, not sure why I need to move the window in this way,
-            // but it does not effect the resulting Y location of the window after animation
-            //actor.set_y(actor.y-32);
-         //}
 
          // Quickly restore the original behavior. Nobody noticed, I guess :D
          actor.ease = orig;

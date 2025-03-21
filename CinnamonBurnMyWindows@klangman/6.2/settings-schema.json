@@ -51,7 +51,7 @@
       "title" : "Effect Specific Settings",
       "keys" : ["apparition-shake-intensity", "apparition-twirl-intensity", "apparition-suction-intensity", "apparition-randomness", "apparition-animation-time", "apparition-reset",
                 "aura-glow-random-color", "aura-glow-start-hue", "aura-glow-speed", "aura-glow-saturation", "aura-glow-edge-size", "aura-glow-edge-hardness", "aura-glow-blur", "aura-glow-animation-time", "aura-glow-reset",
-                "doom-horizontal-scale", "doom-vertical-scale", "doom-pixel-size", "doom-animation-time", "doom-reset",
+                "doom-horizontal-scale", "doom-vertical-scale", "doom-pixel-size", "doom-y-hack", "doom-animation-time", "doom-reset",
                 "energize-a-scale", "energize-a-color", "energize-a-animation-time", "energize-a-reset",
                 "energize-b-scale", "energize-b-color", "energize-b-animation-time", "energize-b-reset",
                 "fire-presets", "fire-3d-noise", "fire-random-color", "fire-animation-time", "fire-reset",
@@ -726,6 +726,19 @@
      "default": 10
   },
 
+  "doom-y-hack": {
+     "type" : "custom",
+     "file" : "CustomWidgets.py",
+     "widget" : "CompactScale",
+     "description" : "Y offset fix for open/unminimize events",
+     "min" : -100,
+     "max" : 100,
+     "step" : 1,
+     "dependency" : "effect-selector=2",
+     "tooltip" : "Apply an offset to the Y axis window target position so that the open/unminimize animation completes at the right location. This is a hack fix for the Doom effect until I can find a proper fix",
+     "default": 0
+  },
+
   "doom-animation-time": {
      "type" : "custom",
      "file" : "CustomWidgets.py",
@@ -744,7 +757,7 @@
      "widget" : "ResetToDefault",
      "description" : "Reset effect settings to default",
      "dependency" : "effect-selector=2",
-     "keys" : ["doom-horizontal-scale", "doom-vertical-scale", "doom-pixel-size", "doom-animation-time"]
+     "keys" : ["doom-horizontal-scale", "doom-vertical-scale", "doom-pixel-size", "doom-y-hack", "doom-animation-time"]
   },
 
 

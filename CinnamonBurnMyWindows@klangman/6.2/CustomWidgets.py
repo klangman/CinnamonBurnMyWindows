@@ -1,13 +1,11 @@
 #!/usr/bin/python3
 
 import random
-
 import math
 import gi
 
 from JsonSettingsWidgets import *
 from gi.repository import Gio, Gtk, Gdk, GLib
-
 
 class FireColorChooser(SettingsWidget):
    def __init__(self, info, key, settings):

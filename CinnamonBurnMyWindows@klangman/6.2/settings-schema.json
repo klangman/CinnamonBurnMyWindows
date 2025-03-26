@@ -583,7 +583,7 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=0",
      "keys" : ["apparition-shake-intensity", "apparition-twirl-intensity", "apparition-suction-intensity", "apparition-randomness", "apparition-animation-time"]
   },
@@ -684,7 +684,7 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=22",
      "keys" : ["aura-glow-random-color", "aura-glow-start-hue", "aura-glow-speed", "aura-glow-saturation", "aura-glow-edge-size", "aura-glow-edge-hardness", "aura-glow-blur", "aura-glow-animation-time"]
   },
@@ -755,7 +755,7 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=2",
      "keys" : ["doom-horizontal-scale", "doom-vertical-scale", "doom-pixel-size", "doom-y-hack", "doom-animation-time"]
   },
@@ -796,7 +796,7 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=3",
      "keys" : ["energize-a-scale", "energize-a-color", "energize-a-animation-time"]
   },
@@ -837,7 +837,7 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=4",
      "keys" : ["energize-b-scale", "energize-b-color", "energize-b-animation-time"]
   },
@@ -952,7 +952,7 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=5",
      "keys" : ["fire-presets", "fire-3d-noise", "fire-animation-time", "fire-custom-scale", "fire-custom-movement-speed", "fire-custom-color-1", "fire-custom-color-2", "fire-custom-color-3", "fire-custom-color-4", "fire-custom-color-5"]
   },
@@ -999,7 +999,7 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=21",
      "keys" : ["focus-blur-amount", "focus-blur-quality", "focus-animation-time"]
   },
@@ -1069,7 +1069,7 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=6",
      "keys" : ["glide-scale", "glide-squish", "glide-tilt", "glide-shift", "glide-animation-time"]
   },
@@ -1134,7 +1134,7 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=7",
      "keys" : ["glitch-scale", "glitch-strength", "glitch-speed", "glitch-color", "glitch-animation-time"]
   },
@@ -1202,7 +1202,7 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=8",
      "keys" : ["hexagon-scale", "hexagon-line-width", "hexagon-line-color", "hexagon-glow-color", "hexagon-additive-blending", "hexagon-animation-time"]
   },
@@ -1263,7 +1263,7 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=9",
      "keys" : ["incinerate-scale", "incinerate-turbulence", "incinerate-color", "incinerate-use-pointer", "incinerate-animation-time"]
   },
@@ -1326,7 +1326,7 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=26",
      "keys" : ["magiclamp-effect", "magiclamp-x-tiles", "magiclamp-y-tiles", "magiclamp-animation-time"]
   },
@@ -1526,7 +1526,7 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=25",
      "keys" : ["mushroom-presets", "mushroom-animation-time", "mushroom-custom-scale-style", "mushroom-custom-spark-count", "mushroom-custom-spark-color", "mushroom-custom-spark-rotation", "mushroom-custom-rays-color", "mushroom-custom-ring-count", "mushroom-custom-ring-rotation", "mushroom-custom-star-count", "mushroom-custom-star-color-0", "mushroom-custom-star-color-1", "mushroom-custom-star-color-2", "mushroom-custom-star-color-3", "mushroom-custom-star-color-4", "mushroom-custom-star-color-5"]
   },
@@ -1572,7 +1572,7 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=12",
      "keys" : ["pixelate-noise", "pixelate-pixel-size", "pixelate-animation-time"]
   },
@@ -1617,10 +1617,11 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=13",
      "keys" : ["pixel-wheel-spoke-count", "pixel-wheel-pixel-size", "pixel-wheel-animation-time"]
   },
+
 
   "pixel-wipe-pixel-size": {
      "type" : "custom",
@@ -1650,10 +1651,11 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=14",
      "keys" : ["pixel-wipe-pixel-size", "pixel-wipe-animation-time"]
   },
+
 
   "portal-color": {
      "type": "colorchooser",
@@ -1714,10 +1716,11 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=15",
      "keys" : ["portal-color", "portal-rotation-speed", "portal-whirling", "portal-details", "portal-animation-time"]
   },
+
 
   "rgbwarp-brightness": {
      "type" : "custom",
@@ -1783,10 +1786,11 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=24",
      "keys" : ["rgbwarp-brightness", "rgbwarp-speed-r", "rgbwarp-speed-g", "rgbwarp-speed-b", "rgbwarp-animation-time"]
   },
+
 
   "team-rocket-animation-split": {
      "type" : "custom",
@@ -1871,10 +1875,11 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=23",
      "keys" : ["team-rocket-animation-split", "team-rocket-horizontal-sparkle-position", "team-rocket-vertical-sparkle-position", "team-rocket-window-rotation", "team-rocket-sparkle-rot", "team-rocket-sparkle-size", "team-rocket-animation-time"]
   },
+
 
   "tv-effect-color": {
      "type": "colorchooser",
@@ -1899,10 +1904,11 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=18",
      "keys" : ["tv-effect-color", "tv-animation-time"]
   },
+
 
   "tv-glitch-scale": {
      "type" : "custom",
@@ -1963,10 +1969,11 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=19",
      "keys" : ["tv-glitch-scale", "tv-glitch-strength", "tv-glitch-speed", "tv-glitch-color", "tv-glitch-animation-time"]
   },
+
 
   "wisps-scale": {
      "type" : "custom",
@@ -2017,7 +2024,7 @@
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
-     "description" : "Reset effect settings to default",
+     "description" : "Reset to default",
      "dependency" : "effect-selector=20",
      "keys" : ["wisps-scale", "wisps-color-1", "wisps-color-2", "wisps-color-3", "wisps-animation-time"]
   },

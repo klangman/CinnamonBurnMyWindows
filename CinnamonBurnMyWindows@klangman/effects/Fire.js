@@ -28,6 +28,9 @@
 const {ShaderFactory} = require('./ShaderFactory.js');
 const Clutter = imports.gi.Clutter;
 const Gio = imports.gi.Gio;
+const Main = imports.ui.main;
+
+const MessageTray = imports.ui.messageTray;
 
 const Gettext = imports.gettext;
 const GLib = imports.gi.GLib;
@@ -178,6 +181,7 @@ var Effect = class Effect {
     const presets = [
       {
         name: _('Default Fire'),
+        untranslatedName: 'Default Fire',
         scale: 1.0,
         speed: 0.5,
         color1: 'rgba(76, 51, 25, 0.0)',
@@ -188,6 +192,7 @@ var Effect = class Effect {
       },
       {
         name: _('Hell Fire'),
+        untranslatedName: 'Hell Fire',
         scale: 1.5,
         speed: 0.2,
         color1: 'rgba(0,0,0,0)',
@@ -198,6 +203,7 @@ var Effect = class Effect {
       },
       {
         name: _('Dark and Smutty'),
+        untranslatedName: 'Dark and Smutty',
         scale: 1.0,
         speed: 0.5,
         color1: 'rgba(0,0,0,0)',
@@ -208,6 +214,7 @@ var Effect = class Effect {
       },
       {
         name: _('Cold Breeze'),
+        untranslatedName: 'Cold Breeze',
         scale: 1.5,
         speed: -0.1,
         color1: 'rgba(0,110,255,0)',
@@ -218,6 +225,7 @@ var Effect = class Effect {
       },
       {
         name: _('Santa is Coming'),
+        untranslatedName: 'Santa is Coming',
         scale: 0.4,
         speed: -0.5,
         color1: 'rgba(0,110,255,0)',
@@ -228,6 +236,7 @@ var Effect = class Effect {
       },
       {
         name: _('Nuclear'),
+        untranslatedName: 'Nuclear',
         scale: 1.5,
         speed: 0.5,
         color1: 'rgba(0,0,0,0)',
@@ -253,10 +262,9 @@ var Effect = class Effect {
     } else {
 
       presets.forEach((preset, i) => {
-        if (preset.name == name) {
+        if (preset.untranslatedName == name) {
           settings.fireScale =  preset.speed;
           settings.fireMovementSpeed = preset.scale;
-
           settings.fireColor = [];
           settings.fireColor.push(preset.color1);
           settings.fireColor.push(preset.color2);

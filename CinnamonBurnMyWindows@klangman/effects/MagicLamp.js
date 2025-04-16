@@ -44,6 +44,14 @@ const EffectType = {
    SineDefault: 4
 }
 
+const Edge = {
+   Top: 0,
+   Bottom: 1,
+   Left: 2,
+   Right: 3,
+   Mouse: 4
+}
+
 Gettext.bindtextdomain(UUID, GLib.get_home_dir() + "/.local/share/locale");
 
 function _(text) {
@@ -54,16 +62,58 @@ function _(text) {
   return locText;
 }
 
-function getIcon(actor) {
+// Returns the geometry of the icon used to determine where the animation should emerge from or disappear towards
+// For open/close events the geometry is controlled by the edge & offset parameters
+// For minimize/unminimize events the geometry is the result of the Meta.get_icon_geometry() API call
+// When get_icon_geometry() fails then a "best guess" is used based where panels exist
+function getIcon(actor, event, edge, offset) {
+   // Open/Close event?
+   if (event === ShouldAnimateManager.Events.MapWindow || event === ShouldAnimateManager.Events.DestroyWindow) {
+      let icon;
+      let monitor = Main.layoutManager.primaryMonitor
+      switch (edge) {
+         case Edge.Top:
+            icon = {x: monitor.x + (monitor.width*(offset/100)), y: monitor.y , width: 32, height: 32};
+            break;
+         case Edge.Bottom:
+            icon = {x: monitor.x + (monitor.width*(offset/100)), y: monitor.y + monitor.height, width: 32, height: 32};
+            break;
+         case Edge.Left:
+            icon = {x: monitor.x, y: monitor.y + (monitor.height*(offset/100)), width: 32, height: 32};
+            break;
+         case Edge.Right:
+            icon =  {x: monitor.x + monitor.width, y: monitor.y + (monitor.height*(offset/100)), width: 32, height: 32};
+            break;
+         case Edge.Mouse:
+            let [px,py,mods] = global.get_pointer();
+            let leftOffset = (px-monitor.x) * 100 / monitor.width;
+            let topOffset = (py-monitor.y) * 100 / monitor.height;
+            let bottomOffset = 100-topOffset;
+            let rightOffset = 100-leftOffset;
+            let lowest = Math.min(leftOffset, topOffset, bottomOffset, rightOffset);
+            if (leftOffset == lowest) {
+               icon = {x: monitor.x, y: py, width: 32, height: 32};
+            } else if (rightOffset == lowest) {
+               icon = {x: monitor.x+monitor.width, y: py, width: 32, height: 32};
+            } else if (topOffset == lowest) {
+               icon = {x: px, y: monitor.y, width: 32, height: 32};
+            } else { // bottomOffset == lowest
+               icon = {x: px, y: monitor.y+monitor.height, width: 32, height: 32};
+            }
+            break;
+      }
+      return icon;
+   }
+   // Must be a minimize/unminimize event, get the windows icon location
    let [success, icon] = actor.meta_window.get_icon_geometry();
    if (success) {
       return icon;
    }
-
+   // Failed to get window's icon location!
    let monitor = actor.meta_window.get_monitor();
    let panels = Main.panelManager.getPanelsInMonitor(monitor);
    let loc = -1;
-   icon = {x: monitor.x + monitor.width / 2, y: monitor.y + monitor.height, width: 0, height: 0};
+   icon = {x: monitor.x + monitor.width / 2, y: monitor.y + monitor.height, width: 32, height: 32};
    // Find a panel and set the icon location to be the middle of the panel.
    // If more than one panel exists, use the below probability order to select
    // the most likely window-list location based on typical usage.
@@ -101,7 +151,7 @@ var Effect = class Effect {
       return 'magiclamp';
    }
 
-   // We don't see any scaling for this effect
+   // We don't need any scaling for this effect
    static getActorScale(settings, forOpening, actor) {
       return {x: 1.0, y: 1.0};
    }
@@ -117,7 +167,7 @@ var MagicLampFactory = class MagicLampFactory {
 
    // Returns the appropriate MagicLamp effect object by creating a new instance or by
    // using a cached instance that has been used previously
-   getShader(event) {
+   getShader(event, settings) {
       let effect;
 
       if (event === ShouldAnimateManager.Events.MapWindow || event === ShouldAnimateManager.Events.Unminimize) {
@@ -134,7 +184,7 @@ var MagicLampFactory = class MagicLampFactory {
          }
       }
       // Allow the effect to decide how to animate based on the event type (currently not used)
-      effect.setEvent(event);
+      effect.setup(event, settings);
       return effect;
    }
 }
@@ -153,7 +203,6 @@ class AbstractCommonMagicLampEffect extends Clutter.DeformEffect {
       this.completedEvent = null;
 
       this.timerId = null;
-      //this.msecs = 0;
 
       this.monitor = {x: 0, y: 0, width: 0, height: 0};
       this.iconMonitor = {x: 0, y: 0, width: 0, height: 0};
@@ -201,7 +250,7 @@ class AbstractCommonMagicLampEffect extends Clutter.DeformEffect {
       //   this.icon = {x: px, y: py, width: 1, height: 1};
       //   this.toTheBorder = false;
       //} else {
-         this.icon = getIcon(actor);
+         this.icon = getIcon(actor, this.event, this.edge, this.edgeOffset);
          //this.toTheBorder = true;
       //}
 
@@ -374,14 +423,14 @@ class MagicLampMinimizeEffect extends AbstractCommonMagicLampEffect {
    _init(factory) {
       super._init();
 
-      //this.k = 0;
-      //this.j = 0;
       this.isMinimizeEffect = true;
       this.factory = factory;
    }
 
-   setEvent(event) {
+   setup(event, settings) {
       this.event = event;
+      this.edge = settings.getValue("magiclamp-edge");
+      this.edgeOffset = settings.getValue("magiclamp-edge-offset");
    }
 
    // This is called once each time the shader is used.
@@ -463,14 +512,14 @@ class MagicLampUnminimizeEffect extends AbstractCommonMagicLampEffect {
    _init(factory) {
       super._init();
 
-      //this.k = 1;
-      //this.j = 1;
       this.isMinimizeEffect = false;
       this.factory = factory;
    }
 
-   setEvent(event) {
+   setup(event, settings) {
       this.event = event;
+      this.edge = settings.getValue("magiclamp-edge");
+      this.edgeOffset = settings.getValue("magiclamp-edge-offset");
    }
 
    // This is called once each time the shader is used.

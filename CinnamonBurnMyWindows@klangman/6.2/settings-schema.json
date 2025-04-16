@@ -101,7 +101,7 @@
     "type" : "custom",
     "file" : "CustomWidgets.py",
     "widget" : "About",
-    "description" : "\n<b>Disintegrate your windows with style.</b>\nVersion: ext-version\n\nPorted to Cinnamon by Kevin Langman\n<a href=\"https://github.com/klangman/CinnamonBurnMyWindows\">Github</a> / <a href=\"https://github.com/klangman/CinnamonBurnMyWindows/issues/new\">Report an issue</a>\n\nBased on the Burn-My-Windows code by Schneegans and contributors\n<a href=\"https://github.com/Schneegans/Burn-My-Windows\">Github</a>\n\nThe Magic Lamp Effect is ported from code by hermes83\n<a href=\"https://github.com/hermes83/compiz-alike-magic-lamp-effect\">Github</a>",
+    "description" : "\n<b>Disintegrate your windows with style.</b>\nVersion: ext-version\n\nPorted to Cinnamon by Kevin Langman\n<a href=\"https://github.com/klangman/CinnamonBurnMyWindows\">Github</a> / <a href=\"https://github.com/klangman/CinnamonBurnMyWindows/issues/new\">Report an issue</a> / <a href=\"https://cinnamon-spices.linuxmint.com/extensions/view/103\">Website</a>\n\nBased on the Burn-My-Windows code by Schneegans and contributors\n<a href=\"https://github.com/Schneegans/Burn-My-Windows\">Github</a> / <a href=\"https://ko-fi.com/schneegans\">Ko-fi</a>\n\nThe Magic Lamp Effect is ported from code by hermes83\n<a href=\"https://github.com/hermes83/compiz-alike-magic-lamp-effect\">Github</a>",
     "icon" : "/icons/cinnamon-burn-my-window.png"
   },
 

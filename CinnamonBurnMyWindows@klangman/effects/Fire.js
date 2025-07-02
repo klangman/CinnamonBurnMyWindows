@@ -28,9 +28,6 @@
 const {ShaderFactory} = require('./ShaderFactory.js');
 const Clutter = imports.gi.Clutter;
 const Gio = imports.gi.Gio;
-const Main = imports.ui.main;
-
-const MessageTray = imports.ui.messageTray;
 
 const Gettext = imports.gettext;
 const GLib = imports.gi.GLib;

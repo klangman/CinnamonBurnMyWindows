@@ -183,7 +183,7 @@ var MagicLampFactory = class MagicLampFactory {
             effect = this._freeMinimizeEffects.pop();
          }
       }
-      // Allow the effect to decide how to animate based on the event type (currently not used)
+      // Setup the effect for the current event and the current settings
       effect.setup(event, settings);
       return effect;
    }
@@ -245,14 +245,7 @@ class AbstractCommonMagicLampEffect extends Clutter.DeformEffect {
       }
 
       this.initialized = true;
-      //if (this.event === ShouldAnimateManager.Events.MapWindow || this.event === ShouldAnimateManager.Events.DestroyWindow) {
-      //   let [px,py,mods] = global.get_pointer();
-      //   this.icon = {x: px, y: py, width: 1, height: 1};
-      //   this.toTheBorder = false;
-      //} else {
-         this.icon = getIcon(actor, this.event, this.edge, this.edgeOffset);
-         //this.toTheBorder = true;
-      //}
+      this.icon = getIcon(actor, this.event, this.edge, this.edgeOffset);
 
       this.monitor = Main.layoutManager.monitors[actor.meta_window.get_monitor()];
 

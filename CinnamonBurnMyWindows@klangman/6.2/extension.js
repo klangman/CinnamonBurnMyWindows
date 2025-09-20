@@ -341,7 +341,7 @@ class BurnMyWindows {
   // This function could be called after the extension is uninstalled, disabled in GNOME
   // Tweaks, when you log out or when the screen locks.
   disable() {
-    // Stop monitoring focus changes
+    // Stop monitoring signals
     this._signalManager.disconnectAllSignals();
 
     // Free all effect resources.
@@ -352,6 +352,7 @@ class BurnMyWindows {
     // Restore the original window-open, window-close, Minimize and Unminimize animations.
     this.shouldAnimateManager.disconnect();
 
+    this._settings.finalize();
     this._settings = null;
   }
 

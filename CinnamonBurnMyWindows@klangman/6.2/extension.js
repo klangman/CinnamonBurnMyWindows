@@ -99,6 +99,34 @@ function EffectIndex(name) {
 
 const UUID = "CinnamonBurnMyWindows@klangman";
 
+// UPower D-Bus Interface
+const DBusUPowerInterface = `<node>
+    <interface name="org.freedesktop.UPower">
+        <method name="EnumerateDevices">
+            <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+            <arg type="ao" name="devices" direction="out"/>
+        </method>
+        <method name="GetDisplayDevice">
+            <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+            <arg type="o" name="device" direction="out"/>
+        </method>
+        <method name="GetCriticalAction">
+            <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+            <arg type="s" name="action" direction="out"/>
+        </method>
+        <signal name="DeviceAdded">
+            <arg type="o" name="device"/>
+        </signal>
+        <signal name="DeviceRemoved">
+            <arg type="o" name="device"/>
+        </signal>
+        <property type="s" name="DaemonVersion" access="read"/>
+        <property type="b" name="OnBattery" access="read"/>
+        <property type="b" name="LidIsClosed" access="read"/>
+        <property type="b" name="LidIsPresent" access="read"/>
+    </interface>
+</node>`;
+
 var extensionThis;
 
 Gettext.bindtextdomain(UUID, GLib.get_home_dir() + "/.local/share/locale");
@@ -136,6 +164,10 @@ class BurnMyWindows {
       this._signalManager = new SignalManager.SignalManager(null);
       // Save the version number to the settings so that the About page can read it (is there a better way?)
       this._settings.setValue("ext-version", this.meta.version);
+      // Get a UPower D-Bus proxy class
+      let DBusUPowerProxyClass = Gio.DBusProxy.makeProxyWrapper(DBusUPowerInterface);
+      // Get a UPower D-Bus proxy instance so we can know the battery state
+      this.uPowerProxy = new DBusUPowerProxyClass(Gio.DBus.system, 'org.freedesktop.UPower', '/org/freedesktop/UPower');
 
       // Effects in this array must be ordered by effect number as defined by the setting-schema.json.
       // New effects will be added in alphabetical order in the UI list, but the effect number, and
@@ -176,6 +208,8 @@ class BurnMyWindows {
       // Settings connections to connect to the mimimize/unminimize events when required
       this._settings.bind("minimize-effect", "minimizeEffect", this._enableMinimizeEffects);
       this._settings.bind("unminimize-effect", "unminimizeEffect", this._enableMinimizeEffects);
+      this._settings.bind("power-minimize-effect", "powerMinimizeEffect", this._enableMinimizeEffects);
+      this._settings.bind("power-unminimize-effect", "powerUnminimizeEffect", this._enableMinimizeEffects);
 
       // Keep track of the previously focused Application
       this._signalManager.connect(global.display, "notify::focus-window", this._onFocusChanged, this);
@@ -361,36 +395,45 @@ class BurnMyWindows {
     let effectIdx;
     let metaWindow = actor.meta_window;
     let windowType = metaWindow.get_window_type();
+    let power = (this._settings.getValue("power-onbattery") === true && this.uPowerProxy.OnBattery === true );
     let dialog = (this._settings.getValue("dialog-special") === true && (windowType === Meta.WindowType.DIALOG || windowType === Meta.WindowType.MODAL_DIALOG));
     let appRule = (!dialog) ? this.getAppRule(metaWindow) : null;
 
+    //log( `The system is using battery power: ${this.uPowerProxy.OnBattery}` );
+
     switch (event) {
       case ShouldAnimateManager.Events.MapWindow:
-        if (appRule) {
+        if (!power && appRule) {
           effectIdx = appRule.open;
         } else {
-          effectIdx = (!dialog) ? this._settings.getValue("open-window-effect") : this._settings.getValue("dialog-open-effect");
+          if (power)
+            effectIdx = (!dialog) ? this._settings.getValue("power-open-effect") : this._settings.getValue("power-dialog-open-effect");
+          else
+            effectIdx = (!dialog) ? this._settings.getValue("open-window-effect") : this._settings.getValue("dialog-open-effect");
         }
         break;
       case ShouldAnimateManager.Events.DestroyWindow:
-        if (appRule) {
+        if (!power && appRule) {
           effectIdx = appRule.close;
         } else {
-          effectIdx = (!dialog) ? this._settings.getValue("close-window-effect") : this._settings.getValue("dialog-close-effect");
+          if (power)
+            effectIdx = (!dialog) ? this._settings.getValue("power-close-effect") : this._settings.getValue("power-dialog-close-effect");
+          else
+            effectIdx = (!dialog) ? this._settings.getValue("close-window-effect") : this._settings.getValue("dialog-close-effect");
         }
         break;
       case ShouldAnimateManager.Events.Minimize:
-        if (appRule) {
+        if (!power && appRule) {
           effectIdx = appRule.minimize;
         } else {
-          effectIdx = this.minimizeEffect;
+          effectIdx = (power) ? this.powerMinimizeEffect : this.minimizeEffect;
         }
         break;
       case ShouldAnimateManager.Events.Unminimize:
-        if (appRule) {
+        if (!power && appRule) {
           effectIdx = appRule.unminimize;
         } else {
-          effectIdx = this.unminimizeEffect;
+          effectIdx = (power) ? this.powerUnminimizeEffect : this.unminimizeEffect;
         }
         break;
     }

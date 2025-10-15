@@ -368,7 +368,9 @@ class BurnMyWindows {
     let effectIdx;
     let metaWindow = actor.meta_window;
     let windowType = metaWindow.get_window_type();
-    let power = (this._settings.getValue("power-onbattery") === true && this._upDisplayDevice.state === UPowerGlib.DeviceState.DISCHARGING );
+    let power = ( this._settings.getValue("power-onbattery") === true &&
+                  this._upDisplayDevice.state === UPowerGlib.DeviceState.DISCHARGING &&
+                  this._upDisplayDevice.percentage < this._settings.getValue("power-percent") );
     let dialog = (this._settings.getValue("dialog-special") === true && (windowType === Meta.WindowType.DIALOG || windowType === Meta.WindowType.MODAL_DIALOG));
     let appRule = (!dialog) ? this.getAppRule(metaWindow) : null;
 

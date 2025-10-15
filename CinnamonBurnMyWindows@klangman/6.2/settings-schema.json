@@ -98,7 +98,7 @@
     "power-section" : {
       "type" : "section",
       "title" : "Manage Burn-My-Windows power consumption",
-      "keys" : ["power-onbattery", "power-open-effect", "power-close-effect", "power-minimize-effect", "power-unminimize-effect"]
+      "keys" : ["power-onbattery", "power-percent", "power-open-effect", "power-close-effect", "power-minimize-effect", "power-unminimize-effect"]
     },
     "power-dialog-section": {
       "type" : "section",
@@ -537,7 +537,7 @@
 
   "power-open-effect": {
     "type": "combobox",
-    "default": 0,
+    "default": 1000,
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
@@ -570,7 +570,7 @@
 
   "power-close-effect": {
     "type": "combobox",
-    "default": 0,
+    "default": 1000,
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
@@ -676,7 +676,7 @@
 
   "power-dialog-open-effect": {
     "type": "combobox",
-    "default": 0,
+    "default": 1000,
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
@@ -709,7 +709,7 @@
 
   "power-dialog-close-effect": {
     "type": "combobox",
-    "default": 0,
+    "default": 1000,
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
@@ -744,6 +744,18 @@
     "type" : "switch",
     "description": "Use different effects when running on battery power",
     "default": false
+  },
+
+  "power-percent": {
+     "type" : "custom",
+     "file" : "CustomWidgets.py",
+     "widget" : "CompactScale",
+     "description" : "When battery is less than (percent)",
+     "min" : 0,
+     "max" : 100,
+     "step" : 1,
+     "dependency" : "power-onbattery=true",
+     "default": 50
   },
 
   "apparition-shake-intensity": {

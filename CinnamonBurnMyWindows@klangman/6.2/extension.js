@@ -371,7 +371,8 @@ class BurnMyWindows {
     let power = ( this._settings.getValue("power-onbattery") === true &&
                   this._upDisplayDevice.state === UPowerGlib.DeviceState.DISCHARGING &&
                   this._upDisplayDevice.percentage < this._settings.getValue("power-percent") );
-    let dialog = (this._settings.getValue("dialog-special") === true && (windowType === Meta.WindowType.DIALOG || windowType === Meta.WindowType.MODAL_DIALOG));
+    let dialog = ( ((!power && this._settings.getValue("dialog-special")) || (power && this._settings.getValue("power-dialog-special"))) &&
+                   (windowType === Meta.WindowType.DIALOG || windowType === Meta.WindowType.MODAL_DIALOG));
     let appRule = (!dialog) ? this.getAppRule(metaWindow) : null;
 
     //log( `Battery state: ${this._upDisplayDevice.state}  ${this._upDisplayDevice.percentage}%` );

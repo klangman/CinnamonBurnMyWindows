@@ -743,6 +743,7 @@
   "power-onbattery": {
     "type" : "switch",
     "description": "Use different effects when running on battery power",
+    "tooltip" : "When enabled, a new set of options will appear allowing you to define which effects (if any) will be used when running on battery power if the battery charge state is less that a set limit. These settings will take precedence over both the general settings and the application specific settings when the charge state condition is met.",
     "default": false
   },
 

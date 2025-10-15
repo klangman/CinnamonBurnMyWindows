@@ -57,6 +57,7 @@ const St = imports.gi.St;
 const Cinnamon = imports.gi.Cinnamon;
 const Util = imports.misc.util;
 const SignalManager = imports.misc.signalManager;
+const UPowerGlib = imports.gi.UPowerGlib;
 
 const Effect = {
   Apparition:  {idx: 0,  name: "Apparition"},
@@ -99,34 +100,6 @@ function EffectIndex(name) {
 
 const UUID = "CinnamonBurnMyWindows@klangman";
 
-// UPower D-Bus Interface
-const DBusUPowerInterface = `<node>
-    <interface name="org.freedesktop.UPower">
-        <method name="EnumerateDevices">
-            <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-            <arg type="ao" name="devices" direction="out"/>
-        </method>
-        <method name="GetDisplayDevice">
-            <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-            <arg type="o" name="device" direction="out"/>
-        </method>
-        <method name="GetCriticalAction">
-            <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-            <arg type="s" name="action" direction="out"/>
-        </method>
-        <signal name="DeviceAdded">
-            <arg type="o" name="device"/>
-        </signal>
-        <signal name="DeviceRemoved">
-            <arg type="o" name="device"/>
-        </signal>
-        <property type="s" name="DaemonVersion" access="read"/>
-        <property type="b" name="OnBattery" access="read"/>
-        <property type="b" name="LidIsClosed" access="read"/>
-        <property type="b" name="LidIsPresent" access="read"/>
-    </interface>
-</node>`;
-
 var extensionThis;
 
 Gettext.bindtextdomain(UUID, GLib.get_home_dir() + "/.local/share/locale");
@@ -164,10 +137,10 @@ class BurnMyWindows {
       this._signalManager = new SignalManager.SignalManager(null);
       // Save the version number to the settings so that the About page can read it (is there a better way?)
       this._settings.setValue("ext-version", this.meta.version);
-      // Get a UPower D-Bus proxy class
-      let DBusUPowerProxyClass = Gio.DBusProxy.makeProxyWrapper(DBusUPowerInterface);
-      // Get a UPower D-Bus proxy instance so we can know the battery state
-      this.uPowerProxy = new DBusUPowerProxyClass(Gio.DBus.system, 'org.freedesktop.UPower', '/org/freedesktop/UPower');
+
+      // Get the UPower Display Device which we can use to determine the battery state/percentage
+      this._upClient = new UPowerGlib.Client();
+      this._upDisplayDevice = this._upClient.get_display_device();
 
       // Effects in this array must be ordered by effect number as defined by the setting-schema.json.
       // New effects will be added in alphabetical order in the UI list, but the effect number, and
@@ -395,11 +368,11 @@ class BurnMyWindows {
     let effectIdx;
     let metaWindow = actor.meta_window;
     let windowType = metaWindow.get_window_type();
-    let power = (this._settings.getValue("power-onbattery") === true && this.uPowerProxy.OnBattery === true );
+    let power = (this._settings.getValue("power-onbattery") === true && this._upDisplayDevice.state === UPowerGlib.DeviceState.DISCHARGING );
     let dialog = (this._settings.getValue("dialog-special") === true && (windowType === Meta.WindowType.DIALOG || windowType === Meta.WindowType.MODAL_DIALOG));
     let appRule = (!dialog) ? this.getAppRule(metaWindow) : null;
 
-    //log( `The system is using battery power: ${this.uPowerProxy.OnBattery}` );
+    //log( `Battery state: ${this._upDisplayDevice.state}  ${this._upDisplayDevice.percentage}%` );
 
     switch (event) {
       case ShouldAnimateManager.Events.MapWindow:

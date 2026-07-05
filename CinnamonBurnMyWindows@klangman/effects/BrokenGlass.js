@@ -25,6 +25,8 @@ const GdkPixbuf = imports.gi.GdkPixbuf;
 const Cogl = imports.gi.Cogl;
 const Gettext = imports.gettext;
 const GLib = imports.gi.GLib;
+const St = imports.gi.St;
+
 
 const UUID = "CinnamonBurnMyWindows@klangman";
 
@@ -68,12 +70,13 @@ var Effect = class Effect {
     this.shaderFactory = new ShaderFactory(Effect.getNick(), (shader) => {
       // Create the texture in the first call.
       if (!this._shardTexture) {
-        const shardData    = GdkPixbuf.Pixbuf.new_from_file( GLib.get_home_dir() +
+        log( "Path: " + GLib.get_home_dir() + '/.local/share/cinnamon/extensions/' + UUID + '/resources/img/shards.png' );
+        const shardData = GdkPixbuf.Pixbuf.new_from_file( GLib.get_home_dir() +
            '/.local/share/cinnamon/extensions/' + UUID + '/resources/img/shards.png');
-        this._shardTexture = new Clutter.Image();
+        log( `Creating new ImageContent with ${shardData.width} / ${shardData.height} / ${shardData.rowstride}` );
+        this._shardTexture = new St.ImageContent({preferred_width: shardData.width, preferred_height: shardData.height});
         this._shardTexture.set_data(shardData.get_pixels(), Cogl.PixelFormat.RGB_888,
-                                    shardData.width, shardData.height,
-                                    shardData.rowstride);
+                                    shardData.width, shardData.height, shardData.rowstride);
       }
 
       // Store all uniform locations.
@@ -92,7 +95,7 @@ var Effect = class Effect {
           let epicenterY = 0.5;
 
           // However, if this option is set, we use the mouse pointer position.
-          if (!forOpening && settings.get_boolean('broken-glass-use-pointer')) {
+          if (!forOpening && settings.getValue('broken-glass-use-pointer')) {
             const [x, y]               = global.get_pointer();
             const [ok, localX, localY] = actor.transform_stage_point(x, y);
 
@@ -102,6 +105,7 @@ var Effect = class Effect {
             }
           }
 
+          log( `Broken class:\n   scale = ${settings.getValue('broken-glass-scale')}\n   force = ${settings.getValue('broken-glass-blow-force')}\n   gravity = ${settings.getValue('broken-glass-gravity')}` );
           // clang-format off
           shader.set_uniform_float(shader._uSeed,       2, [testMode ? 0 : Math.random(), testMode ? 0 : Math.random()]);
           shader.set_uniform_float(shader._uEpicenter,  2, [epicenterX, epicenterY]);
@@ -123,7 +127,8 @@ var Effect = class Effect {
                                    Cogl.PipelineFilter.LINEAR);
 
         // Bind the shard texture.
-        pipeline.set_layer_texture(1, this._shardTexture.get_texture());
+        let texture = this._shardTexture.get_texture();
+        pipeline.set_layer_texture(1, texture);
         pipeline.set_layer_wrap_mode(1, Cogl.PipelineWrapMode.REPEAT);
         pipeline.set_uniform_1i(shader._uShardTexture, 1);
       });

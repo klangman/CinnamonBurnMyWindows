@@ -21,6 +21,7 @@ const {ShaderFactory} = require('./ShaderFactory.js');
 const Clutter = imports.gi.Clutter;
 const GdkPixbuf = imports.gi.GdkPixbuf;
 const Cogl = imports.gi.Cogl;
+const St = imports.gi.St;
 
 const Gettext = imports.gettext;
 const GLib = imports.gi.GLib;
@@ -59,9 +60,8 @@ var Effect = class Effect {
       if (!this._fontTexture) {
         const fontData    = GdkPixbuf.Pixbuf.new_from_file( GLib.get_home_dir() +
            '/.local/share/cinnamon/extensions/' + UUID + '/resources/img/matrixFont.png');
-        this._fontTexture = new Clutter.Image();
-        this._fontTexture.set_data(
-          fontData.get_pixels(),
+        this._fontTexture = new St.ImageContent({preferred_width: fontData.width, preferred_height: fontData.height});
+        this._fontTexture.set_data( fontData.get_pixels(),
           fontData.has_alpha ? Cogl.PixelFormat.RGBA_8888 : Cogl.PixelFormat.RGB_888,
           fontData.width, fontData.height, fontData.rowstride);
       }
@@ -78,7 +78,7 @@ var Effect = class Effect {
       shader.connect('begin-animation', (shader, settings) => {
         const c1 =
           Clutter.Color.from_string(settings.getValue('matrix-trail-color'))[1];
-        const c2 = Clutter.Color.from_string(settings.get_string('matrix-tip-color'))[1];
+        const c2 = Clutter.Color.from_string(settings.getValue('matrix-tip-color'))[1];
 
         // clang-format off
         shader.set_uniform_float(shader._uTrailColor, 3, [c1.red / 255, c1.green / 255, c1.blue / 255]);

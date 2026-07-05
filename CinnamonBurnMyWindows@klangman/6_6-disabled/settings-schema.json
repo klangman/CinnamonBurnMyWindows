@@ -56,6 +56,7 @@
       "title" : "Effect Specific Settings",
       "keys" : ["apparition-shake-intensity", "apparition-twirl-intensity", "apparition-suction-intensity", "apparition-randomness", "apparition-animation-time", "apparition-reset",
                 "aura-glow-random-color", "aura-glow-start-hue", "aura-glow-speed", "aura-glow-saturation", "aura-glow-edge-size", "aura-glow-edge-hardness", "aura-glow-blur", "aura-glow-animation-time", "aura-glow-reset",
+                "broken-glass-scale", "broken-glass-gravity", "broken-glass-blow-force", "broken-glass-use-pointer", "broken-glass-animation-time", 
                 "doom-horizontal-scale", "doom-vertical-scale", "doom-pixel-size", "doom-y-hack", "doom-animation-time", "doom-reset",
                 "energize-a-scale", "energize-a-color", "energize-a-animation-time", "energize-a-reset",
                 "energize-b-scale", "energize-b-color", "energize-b-animation-time", "energize-b-reset",
@@ -66,6 +67,7 @@
                 "hexagon-scale", "hexagon-line-width", "hexagon-line-color", "hexagon-glow-color", "hexagon-additive-blending", "hexagon-animation-time", "hexagon-reset",
                 "incinerate-scale", "incinerate-turbulence", "incinerate-color", "incinerate-use-pointer", "incinerate-animation-time", "incinerate-reset",
                 "magiclamp-effect", "magiclamp-edge", "magiclamp-edge-offset", "magiclamp-x-tiles", "magiclamp-y-tiles", "magiclamp-animation-time", "magiclamp-reset",
+                "matrix-scale", "matrix-randomness", "matrix-tip-color", "matrix-trail-color", "matrix-overshoot", "matrix-animation-time",
                 "mushroom-presets", "mushroom-custom-scale-style", "mushroom-custom-spark-count", "mushroom-custom-spark-color", "mushroom-custom-spark-rotation", "mushroom-custom-rays-color", "mushroom-custom-ring-count", "mushroom-custom-ring-rotation", "mushroom-custom-star-count", "mushroom-star-colors", "mushroom-animation-time", "mushroom-reset",
                 "pixelate-noise", "pixelate-pixel-size", "pixelate-animation-time", "pixelate-reset",
                 "pixel-wheel-spoke-count", "pixel-wheel-pixel-size", "pixel-wheel-animation-time", "pixel-wheel-reset",
@@ -117,6 +119,7 @@
         {"id": "open",        "title": "Open",  "type": "integer", "default": 0, "options": {
             "Apparition": 0,
             "Aura Glow": 22,
+            "Broken Glass": 1,
             "Doom": 2,
             "Energize A": 3,
             "Energize B": 4,
@@ -127,6 +130,7 @@
             "Hexagon": 8,
             "Incinerate": 9,
             "Magic Lamp": 26,
+            "Matrix": 10,
             "Mushroom": 25,
             "Pixelate": 12,
             "Pixel Wheel": 13,
@@ -144,6 +148,7 @@
         {"id": "close",       "title": "Close", "type": "integer", "default": 0, "options": {
             "Apparition": 0,
             "Aura Glow": 22,
+            "Broken Glass": 1,
             "Doom": 2,
             "Energize A": 3,
             "Energize B": 4,
@@ -154,6 +159,7 @@
             "Hexagon": 8,
             "Incinerate": 9,
             "Magic Lamp": 26,
+            "Matrix": 10,
             "Mushroom": 25,
             "Pixelate": 12,
             "Pixel Wheel": 13,
@@ -171,6 +177,7 @@
         {"id": "minimize",       "title": "Minimize", "type": "integer", "default": 1000, "options": {
             "Apparition": 0,
             "Aura Glow": 22,
+            "Broken Glass": 1,
             "Doom": 2,
             "Energize A": 3,
             "Energize B": 4,
@@ -181,6 +188,7 @@
             "Hexagon": 8,
             "Incinerate": 9,
             "Magic Lamp": 26,
+            "Matrix": 10,
             "Mushroom": 25,
             "Pixelate": 12,
             "Pixel Wheel": 13,
@@ -198,6 +206,7 @@
         {"id": "unminimize",       "title": "Unminimize", "type": "integer", "default": 1000, "options": {
             "Apparition": 0,
             "Aura Glow": 22,
+            "Broken Glass": 1,
             "Doom": 2,
             "Energize A": 3,
             "Energize B": 4,
@@ -208,6 +217,7 @@
             "Hexagon": 8,
             "Incinerate": 9,
             "Magic Lamp": 26,
+            "Matrix": 10,
             "Mushroom": 25,
             "Pixelate": 12,
             "Pixel Wheel": 13,
@@ -298,6 +308,7 @@
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
+      "Broken Glass": 1,
       "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
@@ -308,6 +319,7 @@
       "Hexagon": 8,
       "Incinerate": 9,
       "Magic Lamp": 26,
+      "Matrix": 10,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -328,6 +340,7 @@
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
+      "Broken Glass": 1,
       "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
@@ -338,6 +351,7 @@
       "Hexagon": 8,
       "Incinerate": 9,
       "Magic Lamp": 26,
+      "Matrix": 10,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -360,6 +374,7 @@
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
+      "Broken Glass": 1,
       "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
@@ -370,6 +385,7 @@
       "Hexagon": 8,
       "Incinerate": 9,
       "Magic Lamp": 26,
+      "Matrix": 10,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -399,6 +415,7 @@
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
+      "Broken Glass": 1,
       "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
@@ -409,6 +426,7 @@
       "Hexagon": 8,
       "Incinerate": 9,
       "Magic Lamp": 26,
+      "Matrix": 10,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -432,6 +450,7 @@
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
+      "Broken Glass": 1,
       "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
@@ -442,6 +461,7 @@
       "Hexagon": 8,
       "Incinerate": 9,
       "Magic Lamp": 26,
+      "Matrix": 10,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -465,6 +485,7 @@
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
+      "Broken Glass": 1,
       "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
@@ -475,6 +496,7 @@
       "Hexagon": 8,
       "Incinerate": 9,
       "Magic Lamp": 26,
+      "Matrix": 10,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -497,6 +519,7 @@
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
+      "Broken Glass": 1,
       "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
@@ -507,6 +530,7 @@
       "Hexagon": 8,
       "Incinerate": 9,
       "Magic Lamp": 26,
+      "Matrix": 10,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -529,6 +553,7 @@
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
+      "Broken Glass": 1,
       "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
@@ -539,6 +564,7 @@
       "Hexagon": 8,
       "Incinerate": 9,
       "Magic Lamp": 26,
+      "Matrix": 10,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -562,6 +588,7 @@
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
+      "Broken Glass": 1,
       "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
@@ -572,6 +599,7 @@
       "Hexagon": 8,
       "Incinerate": 9,
       "Magic Lamp": 26,
+      "Matrix": 10,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -595,6 +623,7 @@
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
+      "Broken Glass": 1,
       "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
@@ -605,6 +634,7 @@
       "Hexagon": 8,
       "Incinerate": 9,
       "Magic Lamp": 26,
+      "Matrix": 10,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -628,6 +658,7 @@
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
+      "Broken Glass": 1,
       "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
@@ -638,6 +669,7 @@
       "Hexagon": 8,
       "Incinerate": 9,
       "Magic Lamp": 26,
+      "Matrix": 10,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -668,6 +700,7 @@
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
+      "Broken Glass": 1,
       "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
@@ -678,6 +711,7 @@
       "Hexagon": 8,
       "Incinerate": 9,
       "Magic Lamp": 26,
+      "Matrix": 10,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -701,6 +735,7 @@
     "options": {
       "Apparition": 0,
       "Aura Glow": 22,
+      "Broken Glass": 1,
       "Doom": 2,
       "Energize A": 3,
       "Energize B": 4,
@@ -711,6 +746,7 @@
       "Hexagon": 8,
       "Incinerate": 9,
       "Magic Lamp": 26,
+      "Matrix": 10,
       "Mushroom": 25,
       "Pixelate": 12,
       "Pixel Wheel": 13,
@@ -915,6 +951,62 @@
      "description" : "Reset to default",
      "dependency" : "effect-selector=22",
      "keys" : ["aura-glow-random-color", "aura-glow-start-hue", "aura-glow-speed", "aura-glow-saturation", "aura-glow-edge-size", "aura-glow-edge-hardness", "aura-glow-blur", "aura-glow-animation-time"]
+  },
+
+
+  "broken-glass-scale" : {
+     "type" : "custom",
+     "file" : "CustomWidgets.py",
+     "widget" : "CompactScale",
+     "description" : "Scale",
+     "min" : 0.2,
+     "max" : 5.0,
+     "step" : 0.01,
+     "dependency" : "effect-selector=1",
+     "default": 1.0
+  },
+
+  "broken-glass-gravity" : {
+     "type" : "custom",
+     "file" : "CustomWidgets.py",
+     "widget" : "CompactScale",
+     "description" : "Gravity",
+     "min" : -2.0,
+     "max" : 2.0,
+     "step" : 0.01,
+     "dependency" : "effect-selector=1",
+     "default": -1.0
+  },
+
+  "broken-glass-blow-force" : {
+     "type" : "custom",
+     "file" : "CustomWidgets.py",
+     "widget" : "CompactScale",
+     "description" : "Blow Force",
+     "min" : -2.0,
+     "max" : 2.0,
+     "step" : 0.01,
+     "dependency" : "effect-selector=1",
+     "default": 0.5
+  },
+
+  "broken-glass-use-pointer" : {
+     "type" : "switch",
+     "description": "Shatter From Pointer Location",
+     "dependency" : "effect-selector=1",
+     "default": false
+  },
+
+  "broken-glass-animation-time" : {
+     "type" : "custom",
+     "file" : "CustomWidgets.py",
+     "widget" : "CompactScale",
+     "description" : "Effect Duration (ms)",
+     "min" : 100,
+     "max" : 3000,
+     "step" : 10,
+     "dependency" : "effect-selector=1",
+     "default": 1000
   },
 
 
@@ -1586,6 +1678,69 @@
      "description" : "Reset to default",
      "dependency" : "effect-selector=26",
      "keys" : ["magiclamp-effect", "magiclamp-edge", "magiclamp-edge-offset", "magiclamp-x-tiles", "magiclamp-y-tiles", "magiclamp-animation-time"]
+  },
+
+
+  "matrix-scale": {
+     "type" : "custom",
+     "file" : "CustomWidgets.py",
+     "widget" : "CompactScale",
+     "description" : "Scale",
+     "min" : 5,
+     "max" : 50,
+     "step" : 1,
+     "dependency" : "effect-selector=10",
+     "default": 20
+  },
+
+  "matrix-randomness": {
+     "type" : "custom",
+     "file" : "CustomWidgets.py",
+     "widget" : "CompactScale",
+     "description" : "Randomness",
+     "min" : 0.0,
+     "max" : 1.0,
+     "step" : 0.01,
+     "dependency" : "effect-selector=10",
+     "default": 1.0
+  },
+
+  "matrix-tip-color": {
+     "type": "colorchooser",
+     "description" : "Tip Color",
+     "dependency" : "effect-selector=10",
+     "default": "rgb(255, 255, 255)"
+  },
+
+  "matrix-trail-color": {
+     "type": "colorchooser",
+     "description" : "Trail Color",
+     "dependency" : "effect-selector=10",
+     "default": "rgb(25, 255, 89)"
+  },
+
+  "matrix-overshoot": {
+     "type" : "custom",
+     "file" : "CustomWidgets.py",
+     "widget" : "CompactScale",
+     "description" : "Vertical Overshooting",
+     "min" : 0.0,
+     "max" : 1.0,
+     "step" : 0.01,
+     "dependency" : "effect-selector=10",
+     "default": 0.25
+  },
+
+  "matrix-animation-time": {
+     "type" : "custom",
+     "file" : "CustomWidgets.py",
+     "widget" : "CompactScale",
+     "description" : "Effect Duration (ms)",
+     "min" : 100,
+     "max" : 3000,
+     "step" : 10,
+     "dependency" : "effect-selector=10",
+     "default": 1500
   },
 
 

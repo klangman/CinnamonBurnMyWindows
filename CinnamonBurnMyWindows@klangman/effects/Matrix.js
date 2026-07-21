@@ -64,6 +64,15 @@ var Effect = class Effect {
         this._fontTexture.set_data( fontData.get_pixels(),
           fontData.has_alpha ? Cogl.PixelFormat.RGBA_8888 : Cogl.PixelFormat.RGB_888,
           fontData.width, fontData.height, fontData.rowstride);
+
+         // Dump the loaded Pixbuf to a file so we can verify the texture contents.
+         //try {
+         //  const dumpPath = GLib.get_home_dir() + '/.local/share/cinnamon/extensions/' + UUID + '/resources/img/matrixFont_dump.png';
+         //  fontData.savev(dumpPath, 'png', [], []);
+         //  log('Matrix font dumped to: ' + dumpPath);
+         //} catch (e) {
+         //  logError(e);
+         //}
       }
 
       // Store uniform locations of newly created shaders.
@@ -94,11 +103,13 @@ var Effect = class Effect {
       // called get_target() back then but this is not wrapped in GJS.
       // https://gitlab.gnome.org/GNOME/mutter/-/blob/gnome-3-36/clutter/clutter/clutter-offscreen-effect.c#L598
       shader.connect('update-animation', (shader) => {
-        const pipeline = shader.get_pipeline();
+        //const pipeline = shader.get_pipeline();
 
         // Bind the font texture.
-        pipeline.set_layer_texture(1, this._fontTexture.get_texture());
-        pipeline.set_uniform_1i(shader._uFontTexture, 1);
+        //pipeline.set_layer_texture(1, this._fontTexture.get_texture());
+        //log( `Num layers: ${pipeline.get_n_layers()}` );
+        //pipeline.set_uniform_1i(shader._uFontTexture, 1);
+        //pipeline.set_layer_combine(1, "RGBA = REPLACE (TEXTURE)");
       });
     });
   }
@@ -144,5 +155,14 @@ var Effect = class Effect {
   // bounds of the actor. This only works for GNOME 3.38+.
   static getActorScale(settings, forOpening, actor) {
     return {x: 1.0, y: 1.0 + settings.getValue('matrix-overshoot')};
+  }
+
+  // The getSFX() is called from extension.js to get the sound effect file for this effect
+  static getSFX(settings, forOpening) {
+     if (forOpening) {
+        return settings.getValue("matrix-open-sound");
+     } else {
+        return settings.getValue("matrix-close-sound");
+     }
   }
 }

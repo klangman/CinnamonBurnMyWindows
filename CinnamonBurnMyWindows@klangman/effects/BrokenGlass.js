@@ -105,7 +105,6 @@ var Effect = class Effect {
             }
           }
 
-          log( `Broken class:\n   scale = ${settings.getValue('broken-glass-scale')}\n   force = ${settings.getValue('broken-glass-blow-force')}\n   gravity = ${settings.getValue('broken-glass-gravity')}` );
           // clang-format off
           shader.set_uniform_float(shader._uSeed,       2, [testMode ? 0 : Math.random(), testMode ? 0 : Math.random()]);
           shader.set_uniform_float(shader._uEpicenter,  2, [epicenterX, epicenterY]);
@@ -131,6 +130,7 @@ var Effect = class Effect {
         pipeline.set_layer_texture(1, texture);
         pipeline.set_layer_wrap_mode(1, Cogl.PipelineWrapMode.REPEAT);
         pipeline.set_uniform_1i(shader._uShardTexture, 1);
+        //pipeline.set_layer_combine(1, "RGBA = REPLACE (TEXTURE)");
       });
     });
   }
@@ -176,5 +176,14 @@ var Effect = class Effect {
   // bounds of the actor. This only works for GNOME 3.38+.
   static getActorScale(settings, forOpening, actor) {
     return {x: 2.0, y: 2.0};
+  }
+
+  // The getSFX() is called from extension.js to get the sound effect file for this effect
+  static getSFX(settings, forOpening) {
+     if (forOpening) {
+        return settings.getValue("broken-glass-open-sound");
+     } else {
+        return settings.getValue("broken-glass-close-sound");
+     }
   }
 }

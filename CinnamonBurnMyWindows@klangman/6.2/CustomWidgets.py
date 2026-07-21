@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import os
 import random
 import math
 import gi
@@ -9,9 +10,21 @@ import JsonSettingsWidgets
 from JsonSettingsWidgets import *
 from gi.repository import Gio, Gtk, Gdk, GLib
 
+gi.require_version('GSound', '1.0')
+from gi.repository import GSound
+
 OPERATIONS = ['<=', '>=', '<', '>', '!=', '=']
 
 OPERATIONS_MAP = {'<': operator.lt, '<=': operator.le, '>': operator.gt, '>=': operator.ge, '!=': operator.ne, '=': operator.eq}
+
+gsound_context = None
+
+def _get_gsound_context() -> GSound.Context:
+   global gsound_context
+   if gsound_context is None:
+      gsound_context = GSound.Context()
+      gsound_context.init()
+   return gsound_context
 
 def is_number(s):
    try:
@@ -434,6 +447,90 @@ class SetClearButtons(SettingsWidget):
       for element in lst:
          newList.append( {"name": element["name"], "open": False, "close": False, "minimize": False, "unminimize": False} )
       self.settings.set_value("random-include", newList)
+
+# A copy of SoundFileChooser with an X button to clear the sound file name
+class ClearableSoundFileChooser(SettingsWidget):
+   def __init__(self, info, key, settings):
+      SettingsWidget.__init__(self)
+      self.key = key
+      self.settings = settings
+      self.info = info
+
+      self.label = Gtk.Label(_(info['description']), halign=Gtk.Align.START)  # SettingsLabel(label)
+      self.content_widget = Gtk.Box()
+
+      c = self.content_widget.get_style_context()
+      c.add_class(Gtk.STYLE_CLASS_LINKED)
+
+      self.file_picker_button = Gtk.Button()
+      self.file_picker_button.connect("clicked", self.on_picker_clicked)
+
+      button_content = Gtk.Box(spacing=5)
+      self.file_picker_button.add(button_content)
+
+      self.button_label = Gtk.Label()
+      button_content.pack_start(Gtk.Image(icon_name="sound"), False, False, 0)
+      button_content.pack_start(self.button_label, False, False, 0)
+
+      self.content_widget.pack_start(self.file_picker_button, True, True, 0)
+
+      self.pack_start(self.label, False, False, 0)
+      self.pack_end(self.content_widget, False, False, 0)
+
+      self.play_button = Gtk.Button()
+      self.play_button.set_image(Gtk.Image.new_from_icon_name("xsi-media-playback-start-symbolic", Gtk.IconSize.BUTTON))
+      self.play_button.connect("clicked", self.on_play_clicked)
+      self.content_widget.pack_start(self.play_button, False, False, 0)
+
+      self.clear_button = Gtk.Button()
+      self.clear_button.set_image(Gtk.Image.new_from_icon_name("xsi-edit-clear-symbolic", Gtk.IconSize.BUTTON))
+      self.clear_button.connect("clicked", self.on_clear_clicked)
+      self.content_widget.pack_start(self.clear_button, False, False, 0)
+
+      self.update_button_label(info['value']);
+
+      if "tooltip" in info:
+         self.set_tooltip_text(info["tooltip"])
+
+   def on_clear_clicked(self, widget):
+      self.button_label.set_label("")
+      self.settings.set_value(self.key, "")
+
+   def on_play_clicked(self, widget):
+      path = self.settings.get_value(self.key)
+      if path != "":
+         params = {GSound.ATTR_MEDIA_FILENAME: path, GSound.ATTR_MEDIA_ROLE: "test"}
+         _get_gsound_context().play_simple(params)
+
+   def on_picker_clicked(self, widget):
+      dialog = Gtk.FileChooserDialog(title=self.label.get_text(),
+                                     action=Gtk.FileChooserAction.OPEN,
+                                     transient_for=self.get_toplevel(),
+                                     buttons=(_("_Cancel"), Gtk.ResponseType.CANCEL,
+                                              _("_Open"), Gtk.ResponseType.ACCEPT))
+
+      if os.path.exists(self.settings.get_value(self.key)):
+         dialog.set_filename(self.settings.get_value(self.key))
+      else:
+         dialog.set_current_folder('/usr/share/sounds')
+
+      sound_filter = Gtk.FileFilter()
+      sound_filter.add_mime_type("audio/x-wav")
+      sound_filter.add_mime_type("audio/x-vorbis+ogg")
+      sound_filter.set_name(_("Sound files"))
+      dialog.add_filter(sound_filter)
+
+      if dialog.run() == Gtk.ResponseType.ACCEPT:
+         name = dialog.get_filename()
+         self.settings.set_value(self.key, name)
+         self.update_button_label(name)
+
+      dialog.destroy()
+
+   def update_button_label(self, absolute_path):
+      if absolute_path != "":
+         f = Gio.File.new_for_path(absolute_path)
+         self.button_label.set_label(f.get_basename())
 
 
 # This is based on the Range class that handles the "scale" type. It's modified so that it fits on one line

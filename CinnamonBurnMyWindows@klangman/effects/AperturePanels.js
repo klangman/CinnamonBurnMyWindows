@@ -256,35 +256,11 @@ var Effect = class Effect {
     frontShader.beginFollowing(backShader, ctx.settings, ctx.forOpening, ctx.testMode, ctx.duration, actor);
 
     // The offscreen texture is slightly larger than the layer (3px of padding). Read its
-    // real position and size every frame so the shader's pixel mapping is exact.
+    // real size every frame (see Shader.getTextureRect()) so the shader's pixel mapping is exact.
     const updateTexRect = (s) => {
-      let x = 0, y = 0, w = geo.OW, h = geo.OH;
-      try {
-        const [ok, r] = s.get_target_rect();
-        if (ok) {
-          w = r.get_width();
-          h = r.get_height();
-          if (ctx.texPadding === 'centred') {
-            x = r.get_x() - (w - geo.OW) / 2;
-            y = r.get_y() - (h - geo.OH) / 2;
-          } else {
-            // get_target_rect() reports the unpadded origin. Stock Clutter grows the box as
-            // x2' = ceil(x2 + 0.75), x1' = x2' - width, so most padding is on the left/top.
-            x = Math.ceil(r.get_x() + (w - 3) + 0.75) - w;
-            y = Math.ceil(r.get_y() + (h - 3) + 0.75) - h;
-          }
-          x -= geo.ox;
-          y -= geo.oy;
-          // Anything else would mean the texture isn't where we think; assume centred.
-          if (Math.abs(x) > 8 || Math.abs(y) > 8) {
-            x = -(w - geo.OW) / 2;
-            y = -(h - geo.OH) / 2;
-          }
-        }
-      } catch (e) {
-        // Keep the unpadded fallback.
-      }
-      s.set_uniform_float(s._uTexRect, 4, [x, y, w, h]);
+      // Layer coordinates; the unpadded layer until the texture exists.
+      const t = s.getTextureRect(geo.OW, geo.OH, ctx.texPadding === 'centred' ? 'centred' : 'enlarged');
+      s.set_uniform_float(s._uTexRect, 4, t || [0, 0, geo.OW, geo.OH]);
     };
     const texRectIds = [frontShader, backShader].map(
       s => [s, s.connect('update-animation', () => updateTexRect(s))]);

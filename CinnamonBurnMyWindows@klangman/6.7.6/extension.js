@@ -958,31 +958,17 @@ class BurnMyWindows {
     }
 
     if (useCanvas) {
-      // Tell getInputColor() where the window really is inside the canvas's texture.
-      // get_target_rect() reports the unpadded origin with the padded size; how the 3px of
-      // padding is split depends on the Muffin build (see the flip-disc investigation doc).
+      // Tell getInputColor() where the window really is inside the canvas's texture. How
+      // the 3px of padding is split depends on the Muffin build (see the flip-disc
+      // investigation doc and Shader.getTextureRect()).
       const updateInputRect = () => {
         let tx = canvas.x, ty = canvas.y, tw = canvas.width, th = canvas.height;
-        let ok = false;
-        try {
-          let r;
-          [ok, r] = shader.get_target_rect();
-          if (ok) {
-            tw = r.get_width();
-            th = r.get_height();
-            if (CANVAS_TEX_PADDING === 'centred') {
-              tx = r.get_x() - (tw - canvas.width)  / 2;
-              ty = r.get_y() - (th - canvas.height) / 2;
-            } else if (CANVAS_TEX_PADDING === 'enlarged') {
-              tx = Math.ceil(r.get_x() + (tw - 3) + 0.75) - tw;
-              ty = Math.ceil(r.get_y() + (th - 3) + 0.75) - th;
-            } else {
-              tx = r.get_x();
-              ty = r.get_y();
-            }
-          }
-        } catch (e) {
-          ok = false;
+        const t = shader.getTextureRect(canvas.width, canvas.height, CANVAS_TEX_PADDING);
+        if (t) {
+          tx += t[0];
+          ty += t[1];
+          tw  = t[2];
+          th  = t[3];
         }
         const ax   = canvas.x + canvasClone.x;
         const ay   = canvas.y + canvasClone.y;

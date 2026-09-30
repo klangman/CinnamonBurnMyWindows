@@ -197,30 +197,9 @@ var Effect = class Effect {
 
     // Real position / size of each offscreen texture (3px padding), as in AperturePanels.js.
     const updateTexRect = (s) => {
-      let x = 0, y = 0, w = geo.OW, h = geo.OH;
-      try {
-        const [ok, r] = s.get_target_rect();
-        if (ok) {
-          w = r.get_width();
-          h = r.get_height();
-          if (ctx.texPadding === 'centred') {
-            x = r.get_x() - (w - geo.OW) / 2;
-            y = r.get_y() - (h - geo.OH) / 2;
-          } else {
-            x = Math.ceil(r.get_x() + (w - 3) + 0.75) - w;
-            y = Math.ceil(r.get_y() + (h - 3) + 0.75) - h;
-          }
-          x -= geo.ox;
-          y -= geo.oy;
-          if (Math.abs(x) > 8 || Math.abs(y) > 8) {
-            x = -(w - geo.OW) / 2;
-            y = -(h - geo.OH) / 2;
-          }
-        }
-      } catch (e) {
-        // Keep the unpadded fallback.
-      }
-      s.set_uniform_float(s._uTexRect, 4, [x, y, w, h]);
+      // Layer coordinates; the unpadded layer until the texture exists.
+      const t = s.getTextureRect(geo.OW, geo.OH, ctx.texPadding === 'centred' ? 'centred' : 'enlarged');
+      s.set_uniform_float(s._uTexRect, 4, t || [0, 0, geo.OW, geo.OH]);
     };
     const texRectIds = [surfaceShader, windowShader].map(
       s => [s, s.connect('update-animation', () => updateTexRect(s))]);

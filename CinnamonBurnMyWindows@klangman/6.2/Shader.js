@@ -248,6 +248,41 @@ class Shader extends Cinnamon.GLSLEffect {  // ---------------------------------
       super.vfunc_paint_target(...params);
     }
 
+    // Where this effect's offscreen texture lies relative to the top-left corner of the
+    // actor it is attached to, as [x, y, width, height] in that actor's coordinates, or null
+    // before the first paint. `width` and `height` are the actor's size; its paint volume
+    // must be its allocation (clip_to_allocation, as for extension.js's unscaled canvas and
+    // the layered effects' layers).
+    //
+    // Only the size of get_target_rect() is used. Its position is wherever the actor was
+    // painted first this frame, which can be a clone of it inside another offscreen effect
+    // (e.g. a BlurCinnamon blurred window background, painted before our actors as it lives
+    // in global.window_group); it is then relative to that effect's framebuffer, not the
+    // stage. The origin follows from the actor's own size instead, the way Clutter pads the
+    // box (_clutter_actor_box_enlarge_for_effects).
+    //
+    // texPadding: 'enlarged' (stock Muffin: x2' = ceil(x2 + 0.75), x1' = x2' - width, so
+    // most of the 3px is on the left / top), 'centred' (Muffin patched to pad evenly), or
+    // anything else for no padding offset.
+    getTextureRect(width, height, texPadding) {
+      let w, h;
+      try {
+        const [ok, r] = this.get_target_rect();
+        if (!ok) return null;
+        w = r.get_width();
+        h = r.get_height();
+      } catch (e) {
+        return null;
+      }
+      if (texPadding === 'centred') {
+        return [-(w - width) / 2, -(h - height) / 2, w, h];
+      }
+      if (texPadding === 'enlarged') {
+        return [Math.ceil(width + 0.75) - w, Math.ceil(height + 0.75) - h, w, h];
+      }
+      return [0, 0, w, h];
+    }
+
     // --------------------------------------------------------------------- private stuff
 
     // This loads a GLSL file from the extension's resources to a JavaScript string. The

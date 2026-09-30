@@ -478,12 +478,12 @@ class ClearableSoundFileChooser(SettingsWidget):
       self.pack_end(self.content_widget, False, False, 0)
 
       self.play_button = Gtk.Button()
-      self.play_button.set_image(Gtk.Image.new_from_icon_name("xsi-media-playback-start-symbolic", Gtk.IconSize.BUTTON))
+      self.play_button.set_image(Gtk.Image.new_from_icon_name("media-playback-start-symbolic", Gtk.IconSize.BUTTON))
       self.play_button.connect("clicked", self.on_play_clicked)
       self.content_widget.pack_start(self.play_button, False, False, 0)
 
       self.clear_button = Gtk.Button()
-      self.clear_button.set_image(Gtk.Image.new_from_icon_name("xsi-edit-clear-symbolic", Gtk.IconSize.BUTTON))
+      self.clear_button.set_image(Gtk.Image.new_from_icon_name("edit-clear-symbolic", Gtk.IconSize.BUTTON))
       self.clear_button.connect("clicked", self.on_clear_clicked)
       self.content_widget.pack_start(self.clear_button, False, False, 0)
 

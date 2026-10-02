@@ -49,6 +49,7 @@ uniform vec2  uFrameHalf;  // half size of the visible window in pixels
 // User settings (set by effects/Wormhole.js, identical on both layers):
 uniform float uVoidSize;    // wormhole-void-size: throat radius on the sheet, bigger = wider void
 uniform float uTunnelDepth; // wormhole-tunnel-depth: how far down the tube you can see (1 = default)
+uniform float uBounce;      // wormhole-bounce: the bounce's restitution (BOUNCE_E below), 0 = no bounce
 
 // ---- Tunables ----
 
@@ -90,6 +91,27 @@ const vec2 T_WIDEN  = vec2(0.05, 0.50);  // ...and keeps widening until the wind
 const vec2 T_APPEAR = vec2(0.38, 0.48);  // the window fades in (deep down, still in the dark)
 const vec2 T_FLAT   = vec2(0.45, 1.00);  // the sheet flattens, pushing the window out...
 const vec2 T_RISE   = vec2(0.40, 0.95);  // ...growing to its full size on screen
+
+// Bounce (like Clutter.AnimationMode.EASE_OUT_BOUNCE): instead of easing to a stop, the
+// sheet's flattening and the window's rise accelerate into the landing, then the sheet
+// (and the window lying on it) dips back into a shallow dimple a few times, each bounce
+// smaller and shorter.
+// Physically consistent with the fall: a ball dropped over the T_FLAT span, which
+// rebounds with uBounce of its speed (bounce height = uBounce^2 of the full stroke).
+// The rest of the timeline is compressed to make room for the bounces.
+// uBounce 0.5 with 3 bounces is exactly Clutter's EASE_OUT_BOUNCE shape. uBounce 0 turns
+// the bounce off completely: the original eased (smoothstep) landing and timeline.
+// Closing has its own bounce (not the open played backwards): after the window is gone,
+// the funnel snaps flat (falling over T_SINK, its floor rising so the void closes from
+// below instead of shrinking to a pinhole), then the desktop dips back in a few times,
+// with the same dimple as the opening bounce.
+const bool  BOUNCE          = true;   // opening
+const bool  BOUNCE_ON_CLOSE = true;   // closing / minimizing
+const int   BOUNCE_COUNT    = 3;
+// Opening: 0 = the window lands at full size and stays there; only the sheet under it
+// bounces, so the bounce shows as the window itself warping into the dimple and back
+// (it lies on the sheet). 1 = the window also shrinks with each dip.
+const float BOUNCE_WINDOW   = 0.0;
 
 const int   SOLVE_STEPS = 24;  // bisection steps (depth changes fast near the throat)
 
@@ -144,6 +166,40 @@ float span(vec2 t) {
   return smoothstep(t.x, t.y, gProgress);
 }
 
+// Accelerating into the landing (a falling ball: no easing out).
+float fallSpan(vec2 t) {
+  float x = clamp((gProgress - t.x) / (t.y - t.x), 0.0, 1.0);
+  return x * x;
+}
+
+// After landing: how far below "at rest" the bounce is, at time s since the landing in
+// units of the fall's duration (the fall covers 1 in time 1, so gravity = 2).
+float bounceDip(float s) {
+  float start = 0.0;
+  float e     = 1.0;
+  for (int i = 0; i < BOUNCE_COUNT; i++) {
+    e *= uBounce;              // launch speed relative to the impact speed
+    float dur = 2.0 * e;        // time in the air
+    if (s < start + dur) {
+      float x = (s - start) / dur;
+      return e * e * 4.0 * x * (1.0 - x);  // parabola peaking at e^2
+    }
+    start += dur;
+  }
+  return 0.0;
+}
+
+// Total time of the bounces, in units of the fall's duration.
+float bounceTime() {
+  float total = 0.0;
+  float e     = 1.0;
+  for (int i = 0; i < BOUNCE_COUNT; i++) {
+    e     *= uBounce;
+    total += 2.0 * e;
+  }
+  return total;
+}
+
 // The sheet point seen at layer pixel px (portal space v, screen norm uq), in layer
 // pixels, and how bright the sheet is there: fog with depth (this is what makes the
 // void), plus light on the slopes.
@@ -167,20 +223,57 @@ void main() {
   gProgress = uForOpening ? uProgress : 1.0 - uProgress;
   gFog      = FOG_BASE / max(uTunnelDepth, 0.05);
 
+  // Bounce: the main timeline runs in the first `mainPart` of the animation (uProgress
+  // is elapsed time both ways), the bounces in the rest. Opening lands the sheet's
+  // flattening and the window's rise together (both end at T_FLAT.y); closing lands the
+  // funnel's collapse (T_SINK, run backwards).
+  bool  bounceOn    = uBounce > 0.001;
+  bool  openBounce  = bounceOn && BOUNCE && uForOpening;
+  bool  closeBounce = bounceOn && BOUNCE_ON_CLOSE && !uForOpening;
+  float dip         = 0.0;
+  bool  landed      = false;
+  if (openBounce || closeBounce) {
+    vec2  fall     = openBounce ? T_FLAT : T_SINK;
+    float fallTime = fall.y - fall.x;
+    float mainPart = 1.0 / (1.0 + bounceTime() * fallTime);
+    float p        = min(uProgress / mainPart, 1.0);
+    gProgress      = uForOpening ? p : 1.0 - p;
+    if (uProgress > mainPart) {
+      landed = true;
+      dip    = bounceDip((uProgress - mainPart) / (mainPart * fallTime));
+    }
+  }
+
   float sink  = span(T_SINK);
+  if (closeBounce) {
+    // Collapsing: accelerating to flat (no easing out), then the dips.
+    float x = clamp((T_SINK.y - gProgress) / (T_SINK.y - T_SINK.x), 0.0, 1.0);
+    sink    = 1.0 - x * x + dip;
+  }
   float widen = span(T_WIDEN);
-  float flatT = span(T_FLAT);
+  float flatT = openBounce ? fallSpan(T_FLAT) - dip : span(T_FLAT);
+  if (closeBounce && landed) {
+    // Closing dips use the same dimple as the opening ones (the full funnel, flattening
+    // by `dip`). The sheet is flat at the landing either way, so the switch is seamless.
+    sink  = 1.0;
+    widen = 1.0;
+    flatT = 1.0 - dip;
+  }
+  float riseT = openBounce ? fallSpan(vec2(T_RISE.x, T_FLAT.y)) - dip * BOUNCE_WINDOW : span(T_RISE);
   float flat  = 1.0 - flatT;
-  gFloor      = FLOOR_START + FLOOR_RISE * flatT * flatT;
+  // The floor rises as the sheet flattens. When the close bounces, it also rises as the
+  // funnel collapses, so the void closes from below and each dip is a shallow dimple.
+  float floorT = closeBounce ? max(flatT, 1.0 - sink) : flatT;
+  gFloor       = FLOOR_START + FLOOR_RISE * floorT * floorT;
   gAmp        = AMPLITUDE * sink * mix(AMP_START, 1.0, widen) * flat;
   gThroat     = uVoidSize * sink * mix(THROAT_START, 1.0, widen) * flat;
   gAxes       = uAxes * mix(SPREAD_START, 1.0, widen);
 
   // The window's on-screen size grows geometrically (an even rate of growth to the eye),
   // eased in and out: from WIN_START_SIZE to exactly 1.
-  gWinSize  = exp(log(WIN_START_SIZE) * (1.0 - span(T_RISE)));
+  gWinSize  = exp(log(WIN_START_SIZE) * (1.0 - riseT));
   gWinAlpha = span(T_APPEAR);
-  gSheetScale = exp(log(WIN_SHEET_START) * (1.0 - span(T_RISE)));
+  gSheetScale = exp(log(WIN_SHEET_START) * (1.0 - riseT));
 
   // Its depth follows from its size: it sits where the tube (as seen on screen) is just
   // wide enough to hold it, so the sheet never cuts it. As the window grows and the sheet

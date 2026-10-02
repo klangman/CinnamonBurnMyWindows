@@ -46,7 +46,8 @@ function _(text) {
 
 // Tunables. More (depth, timeline, shading) live at the top of
 // resources/shaders/wormhole.frag. The user settings are wormhole-void-size,
-// wormhole-tunnel-depth (both passed to the shader) and wormhole-funnel-size (below).
+// wormhole-tunnel-depth, wormhole-bounce (passed to the shader) and wormhole-funnel-size
+// (below).
 const SHADOW_MARGIN = 64;    // px around the window covered by the layers, for its shadow
 const FUNNEL_EXTRA  = 80;    // funnel semi-axes: half the visible window x funnel size, plus this many px
 
@@ -62,6 +63,7 @@ var Effect = class Effect {
       shader._uFrameHalf = shader.get_uniform_location('uFrameHalf');
       shader._uVoidSize    = shader.get_uniform_location('uVoidSize');
       shader._uTunnelDepth = shader.get_uniform_location('uTunnelDepth');
+      shader._uBounce      = shader.get_uniform_location('uBounce');
     });
   }
 
@@ -76,6 +78,7 @@ var Effect = class Effect {
     const funnelSize  = ctx.settings.getValue('wormhole-funnel-size');
     const voidSize    = ctx.settings.getValue('wormhole-void-size');
     const tunnelDepth = ctx.settings.getValue('wormhole-tunnel-depth');
+    const bounce      = ctx.settings.getValue('wormhole-bounce');
 
     const group = new Clutter.Actor({reactive: false});
     const newLayer = (parent, props = {}) => {
@@ -189,6 +192,7 @@ var Effect = class Effect {
     for (const s of [surfaceShader, windowShader]) {
       s.set_uniform_float(s._uVoidSize,    1, [voidSize]);
       s.set_uniform_float(s._uTunnelDepth, 1, [tunnelDepth]);
+      s.set_uniform_float(s._uBounce,      1, [bounce]);
     }
 
 
@@ -261,6 +265,7 @@ var Effect = class Effect {
     dialog.bindAdjustment('wormhole-void-size');
     dialog.bindAdjustment('wormhole-tunnel-depth');
     dialog.bindAdjustment('wormhole-funnel-size');
+    dialog.bindAdjustment('wormhole-bounce');
     dialog.bindAdjustment('wormhole-animation-time');
   }
 

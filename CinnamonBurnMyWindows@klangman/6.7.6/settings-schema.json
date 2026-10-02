@@ -83,7 +83,7 @@
                 "tv-effect-color", "tv-animation-time", "tv-open-sound", "tv-close-sound", "tv-reset",
                 "tv-glitch-scale", "tv-glitch-strength", "tv-glitch-speed", "tv-glitch-color", "tv-glitch-animation-time", "tv-glitch-open-sound", "tv-glitch-close-sound", "tv-glitch-reset",
                 "wisps-scale", "wisps-color-1", "wisps-color-2", "wisps-color-3", "wisps-animation-time", "wisps-open-sound", "wisps-close-sound", "wisps-reset",
-                "wormhole-void-size", "wormhole-tunnel-depth", "wormhole-funnel-size", "wormhole-animation-time", "wormhole-open-sound", "wormhole-close-sound", "wormhole-reset",
+                "wormhole-void-size", "wormhole-tunnel-depth", "wormhole-funnel-size", "wormhole-bounce", "wormhole-animation-time", "wormhole-open-sound", "wormhole-close-sound", "wormhole-reset",
                 "test-effect"]
     },
     "random-section" : {
@@ -2884,6 +2884,19 @@
      "default": 1.35
   },
 
+  "wormhole-bounce": {
+     "type" : "custom",
+     "file" : "CustomWidgets.py",
+     "widget" : "CompactScale",
+     "description" : "Bounce",
+     "tooltip" : "How much the desktop bounces when the effect lands (0 = no bounce)",
+     "min" : 0.0,
+     "max" : 0.7,
+     "step" : 0.05,
+     "dependency" : "effect-selector=28",
+     "default": 0.5
+  },
+
   "wormhole-animation-time": {
      "type" : "custom",
      "file" : "CustomWidgets.py",
@@ -2902,7 +2915,7 @@
      "widget" : "ResetToDefault",
      "description" : "Reset to default",
      "dependency" : "effect-selector=28",
-     "keys" : ["wormhole-void-size", "wormhole-tunnel-depth", "wormhole-funnel-size", "wormhole-animation-time"]
+     "keys" : ["wormhole-void-size", "wormhole-tunnel-depth", "wormhole-funnel-size", "wormhole-bounce", "wormhole-animation-time"]
   },
 
   "wormhole-open-sound" : {

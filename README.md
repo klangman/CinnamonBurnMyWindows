@@ -20,10 +20,9 @@ This extension needs the Cinnamon.GLSLEffect class which is only available in Ci
 
 1. When closing the Steam Client "setting" window the 'close window effect' does not show the windows contents, resulting in the closing effect to show where the window had existed but otherwise has no negative effect.
 2. (Fixed via work-around) When running VirtualBox, some actions (like restarting Cinnamon or changing panel hide settings) will show a full screen animation of both the Open and Close effect. I assume this is caused by some weirdness with how VirtualBox was written. The problem can be avoided by using two "Application specific settings" list entries to disable open/close animations for the "VirtualBox" and "VirtualBoxVM" WM_CLASS names (entered under the "Application" entry box). New installs of this extension will have these entries by default, but installs that are upgraded to the latest version my need to manually enter these app rules to avoid the issues.
-3. The Doom open effect seems to finish animating at a noticeably lower position than where the window is actually located. This results in the sudden jump up after the animation is completed. When used as a close effect it works correctly. I have added a option in the Doom effect settings to apply an offset to the Y axis so that you can fix this issue for your setup until I am able to find a proper fix for this issue.
-4. The window shadows are not part of the animation and therefore they suddenly appear or disappear right after or before the animation.
+3. The window shadows are not part of the animation and therefore they suddenly appear or disappear right after or before the animation.
 
-### Currently these effects are working in Cinnamon:
+### Effects working in Cinnamon 6.2 (Mint 22) and up:
 
 - Apparition
 - Aura Glow  (new)
@@ -47,15 +46,23 @@ This extension needs the Cinnamon.GLSLEffect class which is only available in Ci
 - TV Glitch
 - Wisps
 
-### Effects currently disabled:
+### Effects working in Cinnamon 6.7.6 (Mint 23) and up:
 
-Because Cinnamon is missing a required API, the following effects are disabled. I am hoping I can enable these effects in Cinnamon 6.6 when it's available in July 2025:
+Before Cinnamon 6.7.6 there was a missing API preventing these effect for working. 6.7.6 is an "unstable" release of Cinnamon, but with Cinnamon 6.8 these effects should be working for everyone:
 
 - Broken Glass
 - Matrix
 - PaintBrush
 - Snap Of Disintegration
 - TRex Attack
+
+### Effects using layers (Cinnamon 6.2+)
+
+I added a new "layers" feature to Cinnamon Burn My Windows which gives the effects access to 3 layers (the wallpaper, background windows and the target window). This enables a new type of effect that can manipulate the desktop under a appearing/disappearing window. I added three new effects that utilize this new "layers" feature.
+
+* Aperture Panels
+* Morph
+* Wormhole
 
 ## Installation
 

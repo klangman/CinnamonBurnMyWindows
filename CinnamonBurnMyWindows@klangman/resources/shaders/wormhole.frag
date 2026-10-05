@@ -108,6 +108,11 @@ const vec2 T_RISE   = vec2(0.40, 0.95);  // ...growing to its full size on scree
 const bool  BOUNCE          = true;   // opening
 const bool  BOUNCE_ON_CLOSE = true;   // closing / minimizing
 const int   BOUNCE_COUNT    = 3;
+// true: the timeline before the landing phase (opening: until the sheet starts flattening,
+// T_FLAT.x; closing: until the funnel starts collapsing, T_SINK.y) runs at its normal pace,
+// and the landing phase (fall + bounces) is one EASE_OUT_BOUNCE curve over the time left.
+// false: the whole timeline is sped up to make room for the bounces.
+const bool  BOUNCE_KEEP_INTRO = true;
 // Opening: 0 = the window lands at full size and stays there; only the sheet under it
 // bounces, so the bounce shows as the window itself warping into the dimple and back
 // (it lies on the sheet). 1 = the window also shrinks with each dip.
@@ -232,12 +237,27 @@ void main() {
   bool  closeBounce = bounceOn && BOUNCE_ON_CLOSE && !uForOpening;
   float dip         = 0.0;
   bool  landed      = false;
-  if (openBounce || closeBounce) {
+  float landAt      = 1.0;  // elapsed time (uProgress) of the landing
+  if ((openBounce || closeBounce) && BOUNCE_KEEP_INTRO) {
+    // Normal pace until the landing phase starts at `knee`; then the fall runs (1 + bounce
+    // time) times faster, so fall + bounces exactly fill the rest of the animation.
+    float knee    = openBounce ? T_FLAT.x : 1.0 - T_SINK.y;
+    float speed   = 1.0 + bounceTime();
+    float fallDur = (1.0 - knee) / speed;
+    landAt        = knee + fallDur;
+    float p       = uProgress <= knee ? uProgress : min(knee + (uProgress - knee) * speed, 1.0);
+    gProgress     = uForOpening ? p : 1.0 - p;
+    if (uProgress > landAt) {
+      landed = true;
+      dip    = bounceDip((uProgress - landAt) / fallDur);
+    }
+  } else if (openBounce || closeBounce) {
     vec2  fall     = openBounce ? T_FLAT : T_SINK;
     float fallTime = fall.y - fall.x;
     float mainPart = 1.0 / (1.0 + bounceTime() * fallTime);
     float p        = min(uProgress / mainPart, 1.0);
     gProgress      = uForOpening ? p : 1.0 - p;
+    landAt         = mainPart;
     if (uProgress > mainPart) {
       landed = true;
       dip    = bounceDip((uProgress - mainPart) / (mainPart * fallTime));
@@ -260,6 +280,12 @@ void main() {
     flatT = 1.0 - dip;
   }
   float riseT = openBounce ? fallSpan(vec2(T_RISE.x, T_FLAT.y)) - dip * BOUNCE_WINDOW : span(T_RISE);
+  if (openBounce && BOUNCE_KEEP_INTRO) {
+    // The window's rise starts (T_RISE.x) before the knee; fall it in real time to the
+    // landing so its speed has no kink where the timeline speeds up.
+    float x = clamp((uProgress - T_RISE.x) / (landAt - T_RISE.x), 0.0, 1.0);
+    riseT   = x * x - dip * BOUNCE_WINDOW;
+  }
   float flat  = 1.0 - flatT;
   // The floor rises as the sheet flattens. When the close bounces, it also rises as the
   // funnel collapses, so the void closes from below and each dip is a shallow dimple.

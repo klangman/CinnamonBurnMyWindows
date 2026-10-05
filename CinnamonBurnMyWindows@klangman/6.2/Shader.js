@@ -289,11 +289,11 @@ class Shader extends Cinnamon.GLSLEffect {  // ---------------------------------
     // code from "common.glsl" is prepended automatically.
     _loadShaderResource(path) {
       let file;
-      file = Gio.File.new_for_path( GLib.get_home_dir() + '/.local/share/cinnamon/extensions/'
+      file = Gio.File.new_for_path( GLib.get_user_data_dir() + '/cinnamon/extensions/'
                                                   + UUID + '/resources/shaders/common.glsl' );
       let [data, etag] =  file.load_bytes(null);
       let common = new TextDecoder().decode(data.get_data());
-      file = Gio.File.new_for_path( GLib.get_home_dir() + '/.local/share/cinnamon/extensions/'
+      file = Gio.File.new_for_path( GLib.get_user_data_dir() + '/cinnamon/extensions/'
                                                                + UUID + '/resources' + path );
       [data, etag] = file.load_bytes(null);
       let code = new TextDecoder().decode(data.get_data());

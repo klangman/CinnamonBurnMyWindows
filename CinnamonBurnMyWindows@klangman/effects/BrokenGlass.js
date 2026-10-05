@@ -30,7 +30,7 @@ const St = imports.gi.St;
 
 const UUID = "CinnamonBurnMyWindows@klangman";
 
-Gettext.bindtextdomain(UUID, GLib.get_home_dir() + "/.local/share/locale");
+Gettext.bindtextdomain(UUID, GLib.get_user_data_dir() + "/locale");
 
 function _(text) {
   let locText = Gettext.dgettext(UUID, text);
@@ -70,8 +70,8 @@ var Effect = class Effect {
     this.shaderFactory = new ShaderFactory(Effect.getNick(), (shader) => {
       // Create the texture in the first call.
       if (!this._shardTexture) {
-        const shardData = GdkPixbuf.Pixbuf.new_from_file( GLib.get_home_dir() +
-           '/.local/share/cinnamon/extensions/' + UUID + '/resources/img/shards.png');
+        const shardData = GdkPixbuf.Pixbuf.new_from_file( GLib.get_user_data_dir() +
+           '/cinnamon/extensions/' + UUID + '/resources/img/shards.png');
         this._shardTexture = new St.ImageContent({preferred_width: shardData.width, preferred_height: shardData.height});
         this._shardTexture.set_data(shardData.get_pixels(), Cogl.PixelFormat.RGB_888,
                                     shardData.width, shardData.height, shardData.rowstride);
@@ -124,11 +124,9 @@ var Effect = class Effect {
                                    Cogl.PipelineFilter.LINEAR);
 
         // Bind the shard texture.
-        let texture = this._shardTexture.get_texture();
-        pipeline.set_layer_texture(1, texture);
+        pipeline.set_layer_texture(1, this._shardTexture.get_texture());
         pipeline.set_layer_wrap_mode(1, Cogl.PipelineWrapMode.REPEAT);
         pipeline.set_uniform_1i(shader._uShardTexture, 1);
-        //pipeline.set_layer_combine(1, "RGBA = REPLACE (TEXTURE)");
       });
     });
   }

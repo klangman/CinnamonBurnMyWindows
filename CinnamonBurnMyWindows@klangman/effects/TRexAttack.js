@@ -27,7 +27,7 @@ const Gettext = imports.gettext;
 const GLib = imports.gi.GLib;
 const UUID = "CinnamonBurnMyWindows@klangman";
 
-Gettext.bindtextdomain(UUID, GLib.get_home_dir() + "/.local/share/locale");
+Gettext.bindtextdomain(UUID, GLib.get_user_data_dir() + "/locale");
 
 function _(text) {
   let locText = Gettext.dgettext(UUID, text);
@@ -55,8 +55,8 @@ var Effect = class Effect {
     this.shaderFactory = new ShaderFactory(Effect.getNick(), (shader) => {
       // Create the texture in the first call.
       if (!this._clawTexture) {
-        const clawData    = GdkPixbuf.Pixbuf.new_from_file( GLib.get_home_dir() +
-           '/.local/share/cinnamon/extensions/' + UUID + '/resources/img/claws.png');
+        const clawData    = GdkPixbuf.Pixbuf.new_from_file( GLib.get_user_data_dir() +
+           '/cinnamon/extensions/' + UUID + '/resources/img/claws.png');
         this._clawTexture = new St.ImageContent({preferred_width: clawData.width, preferred_height: clawData.height});
         this._clawTexture.set_data(clawData.get_pixels(), Cogl.PixelFormat.RGB_888,
                                    clawData.width, clawData.height, clawData.rowstride);

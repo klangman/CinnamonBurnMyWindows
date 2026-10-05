@@ -745,7 +745,6 @@
   },
 
 
-
   "doom-horizontal-scale": {
      "type" : "custom",
      "file" : "CustomWidgets.py",

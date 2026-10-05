@@ -27,7 +27,7 @@ const Gettext = imports.gettext;
 const GLib = imports.gi.GLib;
 const UUID = "CinnamonBurnMyWindows@klangman";
 
-Gettext.bindtextdomain(UUID, GLib.get_home_dir() + "/.local/share/locale");
+Gettext.bindtextdomain(UUID, GLib.get_user_data_dir() + "/locale");
 
 function _(text) {
   let locText = Gettext.dgettext(UUID, text);
@@ -60,8 +60,8 @@ var Effect = class Effect {
     this.shaderFactory = new ShaderFactory(Effect.getNick(), (shader) => {
       // Create the texture in the first call.
       if (!this._dustTexture) {
-        const dustData    = GdkPixbuf.Pixbuf.new_from_file( GLib.get_home_dir() +
-           '/.local/share/cinnamon/extensions/' + UUID + '/resources/img/dust.png');
+        const dustData    = GdkPixbuf.Pixbuf.new_from_file( GLib.get_user_data_dir() +
+           '/cinnamon/extensions/' + UUID + '/resources/img/dust.png');
         this._dustTexture = new St.ImageContent({preferred_width: dustData.width, preferred_height: dustData.height});
         this._dustTexture.set_data(dustData.get_pixels(), Cogl.PixelFormat.RGB_888,
                                    dustData.width, dustData.height, dustData.rowstride);

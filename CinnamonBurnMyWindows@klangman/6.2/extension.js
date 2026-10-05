@@ -558,8 +558,6 @@ class BurnMyWindows {
                    (windowType === Meta.WindowType.DIALOG || windowType === Meta.WindowType.MODAL_DIALOG));
     let appRule = (!dialog) ? this.getAppRule(metaWindow, power) : null;
 
-    //log( `Battery state: ${this._upDisplayDevice.state}  ${this._upDisplayDevice.percentage}%` );
-
     switch (event) {
       case ShouldAnimateManager.Events.MapWindow:
         if (appRule) {

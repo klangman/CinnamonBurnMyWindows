@@ -27,7 +27,7 @@ const Gettext = imports.gettext;
 const GLib = imports.gi.GLib;
 const UUID = "CinnamonBurnMyWindows@klangman";
 
-Gettext.bindtextdomain(UUID, GLib.get_home_dir() + "/.local/share/locale");
+Gettext.bindtextdomain(UUID, GLib.get_user_data_dir() + "/locale");
 
 function _(text) {
   let locText = Gettext.dgettext(UUID, text);
@@ -58,13 +58,12 @@ var Effect = class Effect {
     this.shaderFactory = new ShaderFactory(Effect.getNick(), (shader) => {
       // Create the texture in the first call.
       if (!this._fontTexture) {
-        const fontData    = GdkPixbuf.Pixbuf.new_from_file( GLib.get_home_dir() +
-           '/.local/share/cinnamon/extensions/' + UUID + '/resources/img/matrixFont.png');
+        const fontData    = GdkPixbuf.Pixbuf.new_from_file( GLib.get_user_data_dir() +
+           '/cinnamon/extensions/' + UUID + '/resources/img/matrixFont.png');
         this._fontTexture = new St.ImageContent({preferred_width: fontData.width, preferred_height: fontData.height});
         this._fontTexture.set_data( fontData.get_pixels(),
           fontData.has_alpha ? Cogl.PixelFormat.RGBA_8888 : Cogl.PixelFormat.RGB_888,
           fontData.width, fontData.height, fontData.rowstride);
-
       }
 
       // Store uniform locations of newly created shaders.

@@ -9,6 +9,7 @@
 //                                 |__/                                                 //
 //////////////////////////////////////////////////////////////////////////////////////////
 
+// SPDX-FileCopyrightText: Kevin Langman <klangman@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // The content from common.glsl is automatically prepended to each shader effect.
@@ -34,8 +35,7 @@
 // out of the surface in blotches rather than fading in uniformly.                      //
 //////////////////////////////////////////////////////////////////////////////////////////
 
-uniform float uLayer;      // 0 = surface (what's behind the window), 1 = the window
-uniform vec4  uTexRect;    // this layer's offscreen texture, in layer pixels: x, y, width, height
+// uLayer, uLayerSize and uTexRect, and getLayerPx(), are in common.glsl.
 uniform vec4  uFrameRect;  // the visible window (frame rect), in layer pixels: x, y, width, height
 uniform vec2  uSeed;       // random per animation, identical on both layers
 uniform float uStyle;      // morph-style: 0 = liquid flow, 1 = melt (edge-guided)
@@ -197,7 +197,7 @@ void main() {
   MELT      = uStyle > 0.5;
   gBlur     = BLUR_PX * min(uStrength, 1.0);  // no blur without motion; no more than tuned
 
-  vec2 px   = uTexRect.xy + iTexCoord.st * uTexRect.zw;  // pixel position in the layer
+  vec2 px   = getLayerPx();  // pixel position in the layer
   vec2 flow = flowAt(px);
 
   vec4 oColor;

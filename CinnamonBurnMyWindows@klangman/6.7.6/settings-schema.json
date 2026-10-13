@@ -171,9 +171,9 @@
   },
   "app-rules-button" : {
     "type" : "button",
-    "description" : "Add entry for the application of the most recently focused window",
-    "callback" : "on_config_button_pressed",
-    "tooltip" : "Focus a window you want to enable application specific setting for then return here and press this button."
+    "description" : "Pick a window to add…",
+    "callback" : "on_pick_application_window",
+    "tooltip" : "Click this, then click any window to add an entry for its application to the list above. Press Esc or right-click to cancel."
   },
 
   "random-include" : {

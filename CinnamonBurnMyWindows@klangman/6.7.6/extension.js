@@ -48,6 +48,7 @@ const Wisps = require('./effects/Wisps.js');
 const Wormhole = require('./effects/Wormhole.js');
 
 const ShouldAnimateManager = require("ShouldAnimateManager.js");
+const Layers = require('./LayeredEffect.js');
 
 const Main = imports.ui.main;
 const Gio = imports.gi.Gio;
@@ -114,9 +115,8 @@ const UUID = "CinnamonBurnMyWindows@klangman";
 // window caused a visible jump at the end of the animation on Cinnamon
 const USE_UNSCALED_CANVAS  = true;        // false = old behaviour: scale the window actor
 const CANVAS_BEHIND_MARGIN = 64;          // px around the window covered by the behind layer
-const CANVAS_TEX_PADDING   = 'enlarged';  // how Clutter splits the 3px offscreen-texture padding:
-                                          // 'enlarged' = stock Muffin (mostly left/top),
-                                          // 'centred'  = Muffin patched to pad evenly
+// How Clutter splits the 3px offscreen-texture padding: see TEX_PADDING in LayeredEffect.js.
+const CANVAS_TEX_PADDING   = Layers.TEX_PADDING;
 
 var extensionThis;
 
@@ -220,9 +220,6 @@ class BurnMyWindows {
       this._settings.bind("power-close-effect", "powerCloseEffect");
       this._settings.bind("power-dialog-close-effect", "powerDialogCloseEffect");
       this._settings.bind("enable-sound", "enableSound", this._enableSounds);
-
-      // Keep track of the previously focused Application
-      this._signalManager.connect(global.display, "notify::focus-window", this._onFocusChanged, this);
 
       // WindowTracker so we can map windows to application
       this._windowTracker = Cinnamon.WindowTracker.get_default();
@@ -525,6 +522,9 @@ class BurnMyWindows {
   // This function could be called after the extension is uninstalled, disabled in GNOME
   // Tweaks, when you log out or when the screen locks.
   disable() {
+    // Make sure the window picker isn't left holding the desktop
+    this._endPick();
+
     // Stop monitoring signals
     this._signalManager.disconnectAllSignals();
 
@@ -708,9 +708,9 @@ class BurnMyWindows {
     let canvas = null, canvasClone = null, behindLayer = null, aboveLayer = null;
     let syncCanvas = null;  // set below when useCanvas; called once a frame
 
-    // Which windows are above / below this one while the clone layers of the canvas and of
-    // layered effects are built (see _createStackTracker()).
-    const stack = (useCanvas || layered) ? this._createStackTracker(actor, !forOpening) : null;
+    // Which windows are above / below this one while the clone layers of the canvas are
+    // built (see createStackTracker() in LayeredEffect.js). Layered effects have their own.
+    const stack = useCanvas ? Layers.createStackTracker(actor, !forOpening) : null;
 
     // The canvas the effect expects is the size the scaled window would have had, centred on
     // the window (the "virtual" canvas, v*). Only its on-screen part (c*) is actually built:
@@ -758,15 +758,15 @@ class BurnMyWindows {
       // draw on, so the animation keeps the window's place in the stacking order (a window
       // closing behind others stays behind them) and transparent parts of the effect don't
       // depend on Muffin painting what's under a hidden window (which it doesn't reliably do).
-      // See _insertAboveWindows() for where they go.
+      // See insertAboveWindows() in LayeredEffect.js for where they go.
       const cover = coverRect(geo);
       behindLayer = this._createBehindLayer(actor, cover, stack);
       aboveLayer  = this._createAboveLayer(actor, cover, stack);
-      this._insertAboveWindows([behindLayer, canvas, aboveLayer]);
+      Layers.insertAboveWindows([behindLayer, canvas, aboveLayer]);
 
       // Hide the real window; the clone still renders it. _bmwEffectContainer is set before
       // the opacity drops and cleared before it comes back, so other code watching the
-      // window's opacity (e.g. clones in other extensions, _addWindowClone()) can tell a window
+      // window's opacity (e.g. clones in other extensions, addWindowClone()) can tell a window
       // hidden by an animation from a hidden one, and clone the animation instead.
       actor._bmwEffectContainer = canvas;
       actor.opacity = 0;
@@ -839,16 +839,12 @@ class BurnMyWindows {
       8000 :
       profile.getValue(effect.constructor.getNick() + '-animation-time');
 
-    // Layered effects: the effect hides the window, stacks its own actors over it and
-    // tells us which one gets the shader. It follows the window in layers.update() (called
-    // once a frame, see onFrame below) and cleans up in layers.destroy().
+    // Layered effects (see LayeredEffect.js): the effect hides the window, stacks its own
+    // actors over it and tells us which one gets the shader. It follows the window (and the
+    // stacking order) on its own, once a frame, and cleans up in layers.destroy().
     let layers = null;
     if (layered) {
-      layers = effect.createLayers(actor, shader, {
-        settings: profile, forOpening, testMode, duration, texPadding: CANVAS_TEX_PADDING, stack,
-        insertAboveWindows: (actors) => this._insertAboveWindows(actors),
-        cloneWindow: (layer, wa, ox, oy) => this._addWindowClone(layer, wa, ox, oy)
-      });
+      layers = effect.createLayers(actor, shader, {settings: profile, forOpening, testMode, duration});
       paintTarget = layers.paintTarget;
       actor._bmwEffectContainer = paintTarget;
     }
@@ -936,24 +932,16 @@ class BurnMyWindows {
     //    is its last frame, which doesn't change any more, while the client may already have
     //    changed its buffer (Electron drops its shadow margins on minimize); moving the actor
     //    to the new buffer rect then makes the window jump at the start instead.
-    // 2. The canvas / layers follow the window (and the stacking order).
+    // 2. The canvas follows the window (and the stacking order).
+    // Layered effects do both themselves (see LayeredEffect.js).
     const followBuffer = !!forOpening;
     const metaWindow   = actor.get_meta_window();
     const onFrame = () => {
       if (stack) stack.frame();
-      if (followBuffer) {
-        const b = metaWindow.get_buffer_rect();
-        if (actor.x !== b.x || actor.y !== b.y) {
-          actor.set_position(b.x, b.y);
-        }
-        if (actor.width !== b.width || actor.height !== b.height) {
-          actor.set_size(b.width, b.height);
-        }
-      }
+      if (followBuffer) Layers.followBufferRect(actor, metaWindow);
       if (syncCanvas) syncCanvas();
-      if (layers && layers.update) layers.update();
     };
-    if (shader._timeline) {
+    if (shader._timeline && !layered) {
       shader._bmwFrameId = shader._timeline.connect('new-frame', onFrame);
     }
 
@@ -983,210 +971,10 @@ class BurnMyWindows {
     }
   }
 
-  // Puts `actors` (bottom to top) where effects that don't draw on the window itself put
-  // their actors: in the window group's parent (Main.uiGroup), right above the window group.
-  // Not inside the window group: while Muffin paints it, it limits each window to its
-  // unobscured / freshly damaged region, and clones painted in that same pass inherit the
-  // limit (holes and flashing). Above it, they are painted after all windows but still below
-  // panels, Cinnamon's menus and application popup menus (global.top_window_group), as a
-  // window would be. They also go above any other effect's actors that are still there, so
-  // the newest animation, which has cloned those into its own layers, is drawn on top.
-  _insertAboveWindows(actors) {
-    const wg = global.window_group;
-    let parent  = wg ? wg.get_parent() : null;
-    let sibling = wg;
-    if (!parent) {
-      parent  = Main.uiGroup;
-      sibling = null;
-    }
-    while (sibling && sibling.get_next_sibling() && sibling.get_next_sibling()._bmwEffectLayer) {
-      sibling = sibling.get_next_sibling();
-    }
-    for (const a of actors) {
-      a._bmwEffectLayer = true;
-      if (sibling) {
-        parent.insert_child_above(a, sibling);
-      } else {
-        parent.add_child(a);
-      }
-      sibling = a;
-    }
-  }
-
   // An empty, clipped actor covering `rect` (stage coordinates).
   _createCloneLayer(rect) {
     return new Clutter.Actor({x: rect.x, y: rect.y, width: rect.width, height: rect.height,
                               clip_to_allocation: true, reactive: false});
-  }
-
-  // Adds a clone of any actor to `layer`, whose top-left is at ox, oy on the stage.
-  _addClone(layer, source, ox, oy) {
-    const [sx, sy] = source.get_transformed_position();
-    layer.add_child(new Clutter.Clone({source: source, reactive: false,
-                                       x: Math.round(sx - ox), y: Math.round(sy - oy)}));
-  }
-
-  // Adds a clone of window actor `wa` to `layer`, whose top-left is at ox, oy on the stage.
-  // - Placed by wa.x / y: at map time the transformed position can still report the old
-  //   allocation.
-  // - A clone ignores its source's opacity, so the clone follows the window's opacity
-  //   (0 while the window is hidden by an effect of its own, Cinnamon's opacity settings).
-  // - If the window is being animated by an effect that draws elsewhere (canvas, layers),
-  //   its effect actor is cloned on top, so that animation shows through ours. Once it ends
-  //   that clone goes blank and the window clone (opacity back to 255) takes over.
-  _addWindowClone(layer, wa, ox, oy) {
-    const clone = new Clutter.Clone({source: wa, reactive: false,
-                                     x: Math.round(wa.x - ox), y: Math.round(wa.y - oy)});
-    wa.bind_property('opacity', clone, 'opacity', GObject.BindingFlags.SYNC_CREATE);
-    layer.add_child(clone);
-    if (wa._bmwEffectContainer) {
-      this._addClone(layer, wa._bmwEffectContainer, ox, oy);
-    }
-  }
-
-  // Keeps track of which windows are above and below `actor` while its clone layers are
-  // built, and says when that changed (takeDirty(), checked once a frame).
-  // - Normally that's simply the order of the window actors.
-  // - But while a window disappears (close / minimize, `disappearing`), Muffin keeps its
-  //   actor where it was until the animation ends, even above windows raised meanwhile
-  //   (meta_compositor_sync_stack() keeps hidden / unmanaging windows with an effect in
-  //   progress in their old place). So a window raised during the animation is treated as
-  //   above it, together with everything stacked above that window. Two ways to notice:
-  //   * its 'raised' signal (clicking an unfocused window, Alt-Tab, ...);
-  //   * a mouse button pressed over it. Clicking the window that already has the focus
-  //     doesn't raise it: on X11 Muffin only grabs the buttons of unfocused windows, so it
-  //     never sees that click. The pointer state is polled once a frame instead.
-  //   Anything before the animation's first frame (stack.frame()) doesn't count: that's
-  //   Muffin passing the focus on because this window is going away, and putting that
-  //   window on top would hide most of the animation. Focus changes alone don't count
-  //   either (focus-follows-mouse doesn't raise), nor does the desktop.
-  // windowsNear(rect, above): the visible windows below (above = false) or above
-  // (above = true) `actor` that intersect `rect`. Windows just outside `rect` count too, as
-  // their shadow may reach into it (the layers are opaque, so the real one is hidden there).
-  _createStackTracker(actor, disappearing) {
-    const self     = actor.get_meta_window();
-    const raised   = new Set();   // MetaWindows raised during the animation
-    const ids      = new Map();   // window actor -> small number, for the stacking signature
-    const handlers = [];          // [object, handler id]
-    let   watching = false;
-    let   lastSig  = null;
-
-    const BUTTONS = Clutter.ModifierType.BUTTON1_MASK | Clutter.ModifierType.BUTTON2_MASK |
-                    Clutter.ModifierType.BUTTON3_MASK;
-    const buttonsDown = () => {
-      const [x, y, mods] = global.get_pointer();
-      return [x, y, (mods & BUTTONS) !== 0];
-    };
-    // A button already held when the animation starts (e.g. the click that closed the
-    // window) is not a new click.
-    let buttonWasDown = buttonsDown()[2];
-
-    // The window a click at x, y went to, or null (a panel, a menu, the desktop, ...).
-    const clickedWindow = (x, y) => {
-      // Chrome (panels, menus) is above the windows and reactive; don't look further.
-      const picked = global.stage.get_actor_at_pos(Clutter.PickMode.REACTIVE, x, y);
-      if (picked && picked !== global.stage && !global.window_group.contains(picked)) {
-        return null;
-      }
-      const actors = global.get_window_actors().filter(a => a !== actor);
-      for (let i = actors.length - 1; i >= 0; i--) {
-        const wa = actors[i];
-        if (!wa.visible) continue;
-        const mw = wa.get_meta_window();
-        if (!mw || mw.minimized) continue;
-        const f = mw.get_frame_rect();
-        if (x >= f.x && x < f.x + f.width && y >= f.y && y < f.y + f.height) {
-          return mw.get_window_type() === Meta.WindowType.DESKTOP ? null : mw;
-        }
-      }
-      return null;
-    };
-
-    if (disappearing) {
-      for (const wa of global.get_window_actors()) {
-        const mw = wa.get_meta_window();
-        if (!mw || mw === self) continue;
-        try {
-          handlers.push([mw, mw.connect('raised', () => {
-            if (watching && mw.get_window_type() !== Meta.WindowType.DESKTOP) raised.add(mw);
-          })]);
-        } catch (e) {
-          // No 'raised' signal in this Muffin: windows raised meanwhile stay below.
-        }
-      }
-    }
-
-    const orderOf = () => {
-      const actors = global.get_window_actors();
-      const idx    = actors.indexOf(actor);
-      const others = actors.filter(a => a !== actor);
-      const onTop  = new Set(idx >= 0 ? actors.slice(idx + 1) : []);
-      const first  = others.findIndex(a => {
-        try {
-          return raised.has(a.get_meta_window());
-        } catch (e) {
-          return false;
-        }
-      });
-      if (first >= 0) others.slice(first).forEach(a => onTop.add(a));
-      return {others, onTop};
-    };
-
-    // Which windows are above / below, as a string, to notice changes.
-    const signature = () => {
-      const {others, onTop} = orderOf();
-      const id = (a) => {
-        if (!ids.has(a)) ids.set(a, ids.size + 1);
-        return ids.get(a);
-      };
-      return others.map(a => (onTop.has(a) ? '+' : '-') + id(a)).join(',');
-    };
-    // The layers are built right after this with the same order.
-    lastSig = signature();
-
-    return {
-      frame: () => {
-        watching = true;
-        if (!disappearing) return;
-        const [x, y, down] = buttonsDown();
-        if (down && !buttonWasDown) {
-          const mw = clickedWindow(x, y);
-          if (mw && mw !== self) raised.add(mw);
-        }
-        buttonWasDown = down;
-      },
-
-      // True when the windows above / below changed since the last call (or since the
-      // tracker was created). Checked every frame rather than on 'restacked', which Muffin
-      // emits over and over while a hidden window is being animated.
-      takeDirty: () => {
-        const sig     = signature();
-        const changed = sig !== lastSig;
-        lastSig = sig;
-        return changed;
-      },
-
-      windowsNear: (rect, above) => {
-        const {others, onTop} = orderOf();
-        const M = CANVAS_BEHIND_MARGIN;
-        return others.filter(wa => onTop.has(wa) === above && wa.visible &&
-          wa.x - M < rect.x + rect.width  && wa.x + wa.width  + M > rect.x &&
-          wa.y - M < rect.y + rect.height && wa.y + wa.height + M > rect.y);
-      },
-
-      destroy: () => {
-        for (const [obj, id] of handlers) {
-          try {
-            obj.disconnect(id);
-          } catch (e) {
-            // The window is gone already.
-          }
-        }
-        handlers.length = 0;
-        ids.clear();
-        raised.clear();
-      }
-    };
   }
 
   // Clones of everything behind `actor` (wallpaper, desktop icons, desklets, lower windows)
@@ -1194,19 +982,19 @@ class BurnMyWindows {
   _createBehindLayer(actor, rect, stack) {
     const layer = this._createCloneLayer(rect);
 
-    if (global.background_actor) this._addClone(layer, global.background_actor, rect.x, rect.y);
+    if (global.background_actor) Layers.addClone(layer, global.background_actor, rect.x, rect.y);
 
     const desklets = (Main.deskletContainer && Main.deskletContainer.actor) || null;
     let deskletsAdded = false;
     for (const wa of stack.windowsNear(rect, false)) {
       // Desklets sit above the desktop window(s) and below normal windows.
       if (!deskletsAdded && desklets && wa.get_meta_window().get_window_type() !== Meta.WindowType.DESKTOP) {
-        this._addClone(layer, desklets, rect.x, rect.y);
+        Layers.addClone(layer, desklets, rect.x, rect.y);
         deskletsAdded = true;
       }
-      this._addWindowClone(layer, wa, rect.x, rect.y);
+      Layers.addWindowClone(layer, wa, rect.x, rect.y);
     }
-    if (!deskletsAdded && desklets) this._addClone(layer, desklets, rect.x, rect.y);
+    if (!deskletsAdded && desklets) Layers.addClone(layer, desklets, rect.x, rect.y);
 
     return layer;
   }
@@ -1216,42 +1004,184 @@ class BurnMyWindows {
   _createAboveLayer(actor, rect, stack) {
     const layer = this._createCloneLayer(rect);
     for (const wa of stack.windowsNear(rect, true)) {
-      this._addWindowClone(layer, wa, rect.x, rect.y);
+      Layers.addWindowClone(layer, wa, rect.x, rect.y);
     }
     return layer;
   }
 
-  _onFocusChanged() {
-     this.prev_focused_window = this.last_focused_window;
-     this.last_focused_window = global.display.get_focus_window();
+  // ---- Window picker ----
+  // Started from the "Pick a window to add..." button in the settings dialog. The user clicks the
+  // window they mean and its application is added to the application specific rules list. While
+  // picking, a transparent modal overlay covers the screen: it highlights the window under the
+  // pointer and names it, a click picks it, and Esc, a right-click or a 30 second timeout cancels.
+  pickWindow() {
+    if (this._picker)
+      return;
+    let overlay = new St.Widget({ reactive: true, can_focus: true, x: 0, y: 0,
+                                  width: global.screen_width, height: global.screen_height });
+    let highlight = new St.Widget({ visible: false,
+       style: "border: 2px solid rgba(53,132,228,1); background-color: rgba(53,132,228,0.2); border-radius: 6px;" });
+    let highlightLabel = new St.Label({ x: 10, y: 10,
+       style: "background-color: rgba(0,0,0,0.8); color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold;" });
+    highlight.add_child(highlightLabel);
+    overlay.add_child(highlight);
+    let hint = new St.Label({ text: _("Click a window to add its application to the application specific rules.  Esc or right-click to cancel."),
+       style: "background-color: rgba(0,0,0,0.85); color: white; padding: 10px 18px; border-radius: 8px; font-size: 11pt;" });
+    overlay.add_child(hint);
+    Main.uiGroup.add_child(overlay);
+    Main.uiGroup.set_child_above_sibling(overlay, null);
+    let monitor = Main.layoutManager.primaryMonitor;
+    let [, hintWidth] = hint.get_preferred_width(-1);
+    hint.set_position(monitor.x + Math.floor((monitor.width - hintWidth) / 2), monitor.y + 60);
+
+    if (!Main.pushModal(overlay)) {
+      overlay.destroy();
+      this._notify(_("Couldn't start the window picker. Close any open menus and try again."));
+      return;
+    }
+    this._picker = { overlay: overlay, highlight: highlight, label: highlightLabel, window: null, timeoutId: 0 };
+    overlay.grab_key_focus();
+    if (Cinnamon.Cursor && Cinnamon.Cursor.CROSSHAIR !== undefined)
+      global.set_cursor(Cinnamon.Cursor.CROSSHAIR);
+
+    overlay.connect("motion-event", (actor, event) => {
+      let [x, y] = event.get_coords();
+      this._pickerHover(x, y);
+      return Clutter.EVENT_STOP;
+    });
+    overlay.connect("button-press-event", () => Clutter.EVENT_STOP);
+    overlay.connect("scroll-event", () => Clutter.EVENT_STOP);
+    // Act on the release, so it doesn't reach the window underneath once the grab is gone
+    overlay.connect("button-release-event", (actor, event) => {
+      if (event.get_button() === 1) {
+        let [x, y] = event.get_coords();
+        let metaWindow = this._windowAtPoint(x, y);
+        if (metaWindow) {   // a click on the desktop or a panel just keeps picking
+          this._endPick();
+          this._addWindowToAppRules(metaWindow);
+        }
+      } else {
+        this._endPick();
+      }
+      return Clutter.EVENT_STOP;
+    });
+    overlay.connect("key-press-event", (actor, event) => {
+      if (event.get_key_symbol() === Clutter.KEY_Escape)
+        this._endPick();
+      return Clutter.EVENT_STOP;
+    });
+    // Never leave the desktop grabbed if something goes wrong
+    this._picker.timeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 30, () => {
+      if (this._picker)
+        this._picker.timeoutId = 0;
+      this._endPick();
+      return GLib.SOURCE_REMOVE;
+    });
+
+    let [px, py] = global.get_pointer();
+    this._pickerHover(px, py);
   }
 
-  // When the button is pressed we will determine what the last focused was and add
-  // and entry in the app specific list for that windows app
-  on_config_button_pressed() {
-    if (this.prev_focused_window) {
-      let app = this._windowTracker.get_window_app(this.prev_focused_window);
-      if (!app) {
-        app = this._windowTracker.get_app_from_pid(this.prev_focused_window.get_pid());
-      }
-      if (app && !app.is_window_backed()) {
-         let appRules = this._settings.getValue("app-rules");
-         appRules.push( {enabled:false, open:0, close:0, application:app.get_id()} );
-         this._settings.setValue("app-rules", appRules);
-      } else if (this.prev_focused_window.get_wm_class()) {
-         let appRules = this._settings.getValue("app-rules");
-         appRules.push( {enabled:false, open:0, close:0, application:this.prev_focused_window.get_wm_class()} );
-         this._settings.setValue("app-rules", appRules);
-      } else {
-        let source = new MessageTray.Source(this.meta.name);
-        let notification = new MessageTray.Notification(source, _("Error") + ": " + this.meta.name,
-          _("Unable to determine the application or the WM_CLASS of the previously focused window, therefore application specific effects can not be applied to that window"),
-          {icon: new St.Icon({icon_name: "cinnamon-burn-my-window", icon_type: St.IconType.FULLCOLOR, icon_size: source.ICON_SIZE })}
-          );
-        Main.messageTray.add(source);
-        source.notify(notification);
-      }
+  _endPick() {
+    let picker = this._picker;
+    if (!picker)
+      return;
+    this._picker = null;
+    if (picker.timeoutId)
+      GLib.source_remove(picker.timeoutId);
+    global.unset_cursor();
+    Main.popModal(picker.overlay);
+    picker.overlay.destroy();
+  }
+
+  // Highlight the window under the pointer and show the name it would be added as
+  _pickerHover(x, y) {
+    let picker = this._picker;
+    if (!picker)
+      return;
+    let metaWindow = this._windowAtPoint(x, y);
+    if (metaWindow === picker.window)
+      return;
+    picker.window = metaWindow;
+    if (!metaWindow) {
+      picker.highlight.hide();
+      return;
     }
+    let rect = metaWindow.get_frame_rect();
+    picker.highlight.set_position(rect.x, rect.y);
+    picker.highlight.set_size(rect.width, rect.height);
+    picker.label.text = this._getWindowRuleName(metaWindow) || _("(unknown application)");
+    picker.highlight.show();
+  }
+
+  // The topmost visible window on the current workspace whose frame contains (x, y), or null
+  _windowAtPoint(x, y) {
+    let workspace = (global.workspace_manager || global.screen).get_active_workspace();
+    let types = [Meta.WindowType.NORMAL, Meta.WindowType.DIALOG, Meta.WindowType.MODAL_DIALOG, Meta.WindowType.UTILITY];
+    let windows = global.display.list_windows(0).filter(w =>
+       types.includes(w.get_window_type()) && !w.minimized && w.showing_on_its_workspace() &&
+       (w.is_on_all_workspaces() || w.get_workspace() === workspace));
+    windows = global.display.sort_windows_by_stacking(windows);   // bottom to top
+    for (let i = windows.length - 1; i >= 0; i--) {
+      let rect = windows[i].get_frame_rect();
+      if (x >= rect.x && x < rect.x + rect.width && y >= rect.y && y < rect.y + rect.height)
+        return windows[i];
+    }
+    return null;
+  }
+
+  // The application id of a window (null when Cinnamon only knows it as a bare window)
+  _getWindowAppId(metaWindow) {
+    let app = this._windowTracker.get_window_app(metaWindow);
+    if (!app) {
+      app = this._windowTracker.get_app_from_pid(metaWindow.get_pid());
+    }
+    return (app && !app.is_window_backed()) ? app.get_id() : null;
+  }
+
+  // The name a picked window is added to the rules as: its application id, or failing that its WM_CLASS
+  // (the same two names getAppRule() matches against)
+  _getWindowRuleName(metaWindow) {
+    return this._getWindowAppId(metaWindow) || metaWindow.get_wm_class() || null;
+  }
+
+  // Add a (disabled) application specific rule for the window's application, so the user can
+  // choose its effects and then enable it. Nothing is added if the application already has a rule.
+  _addWindowToAppRules(metaWindow) {
+    let name = this._getWindowRuleName(metaWindow);
+    if (!name) {
+      this._notify(_("Unable to determine the application or the WM_CLASS of that window, therefore application specific effects can not be applied to it"));
+      return;
+    }
+    let appID = this._getWindowAppId(metaWindow);
+    let wmClass = metaWindow.get_wm_class();
+    let appRules = (this._settings.getValue("app-rules") || []).map(rule => Object.assign({}, rule));
+    let existing = appRules.find(rule => rule.application && ((appID && rule.application == appID) || (wmClass && rule.application == wmClass)));
+    if (existing) {
+      this._notify(_("There is already an entry for") + " \"" + existing.application + "\"" +
+                   (existing.enabled ? "" : " (" + _("not enabled") + ")") + ".");
+      return;
+    }
+    let entry = {};
+    let data = this._settings.settingsData ? this._settings.settingsData["app-rules"] : null;
+    for (let column of (data && data.columns) || []) {
+      if (column.default !== undefined)
+        entry[column.id] = column.default;
+    }
+    entry.enabled = false;
+    entry.application = name;
+    appRules.push(entry);
+    this._settings.setValue("app-rules", appRules);
+    this._notify(_("Added an entry for") + " \"" + name + "\". " + _("Choose its effects, then enable it."));
+  }
+
+  _notify(text) {
+    let source = new MessageTray.Source(this.meta.name);
+    let notification = new MessageTray.Notification(source, this.meta.name, text,
+      {icon: new St.Icon({icon_name: "cinnamon-burn-my-window", icon_type: St.IconType.FULLCOLOR, icon_size: source.ICON_SIZE })}
+      );
+    Main.messageTray.add(source);
+    source.notify(notification);
   }
 
   on_test_button_pressed() {
@@ -1280,8 +1210,9 @@ function init(metadata) {
 }
 
 const Callbacks = {
-  on_config_button_pressed: function() {
-     extension.on_config_button_pressed();
+  on_pick_application_window: function() {
+     if (extension)
+        extension.pickWindow();
   },
   on_test_button_pressed: function() {
      extension.on_test_button_pressed();

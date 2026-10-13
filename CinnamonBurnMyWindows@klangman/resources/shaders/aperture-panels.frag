@@ -9,8 +9,7 @@
 //                                 |__/                                                 //
 //////////////////////////////////////////////////////////////////////////////////////////
 
-// SPDX-License-Identifier: GPL-3.0-or-later
-
+// SPDX-FileCopyrightText: Kevin Langman <klangman@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // The content from common.glsl is automatically prepended to each shader effect.
@@ -33,12 +32,12 @@
 // front shows the windows behind as they are, and back shows the window's shadow       //
 // fading in as the nearest edge panel turns. Inside the grid, front draws the windows  //
 // behind on every panel (squashed as it turns) and back draws the window on panels     //
-// that are past 90 degrees. Gaps are transparent in both, so the wall shows through.   //
+// that are past 90 degrees. Gaps are transparent in both, so the wall shows through,   //
+// except with the "Black Void" backdrop (uBlackVoid), where front paints them black    //
+// itself rather than relying on a black wall actor being drawn behind it.             //
 //////////////////////////////////////////////////////////////////////////////////////////
 
-uniform float uLayer;      // 0 = front (windows behind), 1 = back (the window)
-uniform vec4  uTexRect;    // this layer's offscreen texture, in layer pixels: x, y, width, height
-uniform vec2  uLayerSize;  // the layer actor's size in pixels
+// uLayer, uLayerSize and uTexRect, and getLayerPx(), are in common.glsl.
 uniform vec4  uFrame;      // visible window inside the layer: x, y, width, height (pixels)
 uniform vec2  uCell;       // panel size in pixels; divides the visible window exactly
 
@@ -48,6 +47,7 @@ uniform float uVerticalAxis; // 1 = panels turn around a vertical axis (squash s
 uniform float uBorderStyle;  // 0 = none, 1 = while flipping, 2 = ahead of the wave,
                              // 3 = behind the wave, 4 = ahead of and behind the wave
 uniform vec4  uBorderColor;  // straight alpha
+uniform float uBlackVoid;    // 1 = "Black Void" backdrop: front paints the gaps opaque black
 
 // ---- Tunables (candidates for user settings) ----
 
@@ -83,12 +83,6 @@ float panelHash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
   p += dot(p, p + 45.32);
   return fract(p.x * p.y);
-}
-
-// This layer's colour at pixel position p (layer coordinates).
-vec4 layerAt(vec2 p) {
-  p = clamp(p, vec2(0.5), uLayerSize - 0.5);
-  return getInputColor((p - uTexRect.xy) / uTexRect.zw);
 }
 
 // Where along the sweep (0..1) the panel at grid position `cell` sits. 0 flips first,
@@ -157,7 +151,7 @@ void main() {
 
   vec4 oColor = vec4(0.0);
   bool back   = uLayer > 0.5;
-  vec2 px     = uTexRect.xy + iTexCoord.st * uTexRect.zw;  // pixel position in the layer
+  vec2 px     = getLayerPx();  // pixel position in the layer
   vec2 q      = px - uFrame.xy;                            // relative to the visible window
 
   if (any(lessThan(q, vec2(0.0))) || any(greaterThanEqual(q, uFrame.zw))) {
@@ -195,7 +189,7 @@ void main() {
     // exact. back: the window, only once the panel is past 90 degrees.
     if (onPanel && (!back || local > 0.5)) {
       vec2 src   = uFrame.xy + (cell + panelUV) * uCell;
-      vec4 panel = layerAt(src);
+      vec4 panel = getLayerColor(src);
 
       // Shade the panel as it turns edge-on (none at local = 0 and 1).
       panel.rgb *= mix(EDGE_SHADE, 1.0, squash);
@@ -216,6 +210,9 @@ void main() {
       }
 
       oColor = panel;
+    } else if (!back && uBlackVoid > 0.5) {
+      // A gap between turning panels: the black void (the wallpaper is on the panels).
+      oColor = vec4(0.0, 0.0, 0.0, 1.0);
     }
   }
 

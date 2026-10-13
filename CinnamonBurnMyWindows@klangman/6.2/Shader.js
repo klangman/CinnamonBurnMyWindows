@@ -92,6 +92,11 @@ class Shader extends Cinnamon.GLSLEffect {  // ---------------------------------
       this._uInputRect    = this.get_uniform_location('uInputRect');
       this._uCanvasRect   = this.get_uniform_location('uCanvasRect');
 
+      // Only used by layered effects (see LayeredEffect.js), -1 elsewhere.
+      this._uLayer        = this.get_uniform_location('uLayer');
+      this._uLayerSize    = this.get_uniform_location('uLayerSize');
+      this._uTexRect      = this.get_uniform_location('uTexRect');
+
       // Create a timeline to drive the animation.
       this._timeline = new Clutter.Timeline();
 

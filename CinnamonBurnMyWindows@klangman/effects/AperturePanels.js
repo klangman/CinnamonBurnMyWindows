@@ -41,7 +41,8 @@ function _(text) {
 const WAVE_SHAPE_RANDOM  = 5;
 const FLIP_AXIS_VERTICAL = 0;
 const FLIP_AXIS_RANDOM   = 2;
-const BACKDROP_BLACK_VOID = 1;  // aperture-panels-backdrop: 0 = Wallpaper, 1 = Black void
+const BACKDROP_BLACK_VOID  = 1;  // aperture-panels-backdrop: 0 = Wallpaper, 1 = Black void,
+const BACKDROP_TRANSPARENT = 2;  //                           2 = Transparent
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // The window is split into a grid of panels (like the moving wall panels in the Portal //
@@ -94,7 +95,10 @@ var Effect = class Effect {
     // the wall and only the windows behind are painted on the panels. "Black void": the
     // desktop (wallpaper, desktop icons, desklets) is painted on the panels too, so it flips
     // with them and the wall is black.
-    const blackVoid = settings.getValue('aperture-panels-backdrop') === BACKDROP_BLACK_VOID;
+    // "Transparent": no wall and no desktop at all; the real screen shows through the gaps.
+    const backdrop    = settings.getValue('aperture-panels-backdrop');
+    const blackVoid   = backdrop === BACKDROP_BLACK_VOID;
+    const transparent = backdrop === BACKDROP_TRANSPARENT;
 
     // The user's settings, read once: both shaders must get the same values, including the
     // same pick for the "Random" options.
@@ -111,8 +115,9 @@ var Effect = class Effect {
 
     return LayeredEffect.create(actor, shader, ctx, {
       factory:       this.shaderFactory,
-      wall:          true,  // shows through the gaps between the turning panels
-      desktopOnWall: !blackVoid,
+      wall:          !transparent,  // shows through the gaps between the turning panels
+      desktopOnWall: !blackVoid && !transparent,
+      noDesktop:     transparent,
 
       // A grid over the visible window only, with a panel size that divides it exactly.
       geometry: (frame) => {

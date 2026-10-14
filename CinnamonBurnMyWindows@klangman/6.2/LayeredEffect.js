@@ -292,6 +292,8 @@ var LayeredEffect = class LayeredEffect {
   //   desktopOnWall: true: the desktop (wallpaper, desktop icons, desklets) goes on the
   //                  wall (it stays put while the surface animates). Implies wall.
   //                  Otherwise it is part of the surface.
+  //   noDesktop:     true: the desktop (wallpaper, desktop icons, desklets) is not drawn
+  //                  at all; the real one shows through wherever the effect reveals it.
   //   opaqueSurface: true: the surface is black under its contents, so nothing the
   //                  effect reveals ever shows the real screen through it.
   //   geometry(frame, actor, stageW, stageH):
@@ -397,18 +399,22 @@ var LayeredEffect = class LayeredEffect {
       // windows behind. Which windows are below / above is decided by the stack tracker
       // (it knows about windows raised while this one closes or minimizes).
       const desk = opts.desktopOnWall ? wall : surface;
-      if (global.background_actor) addClone(desk, global.background_actor, g.ox, g.oy);
+      if (!opts.noDesktop && global.background_actor) {
+        addClone(desk, global.background_actor, g.ox, g.oy);
+      }
 
       const area      = {x: g.ox, y: g.oy, width: g.OW, height: g.OH};
       const behind    = stack.windowsNear(area, false);
       const isDesktop = (wa) =>
         wa.get_meta_window().get_window_type() === Meta.WindowType.DESKTOP;
-      for (const wa of behind.filter(isDesktop)) {
-        addWindowClone(desk, wa, g.ox, g.oy);
-      }
+      if (!opts.noDesktop) {
+        for (const wa of behind.filter(isDesktop)) {
+          addWindowClone(desk, wa, g.ox, g.oy);
+        }
 
-      const desklets = (Main.deskletContainer && Main.deskletContainer.actor) || null;
-      if (desklets) addClone(desk, desklets, g.ox, g.oy);
+        const desklets = (Main.deskletContainer && Main.deskletContainer.actor) || null;
+        if (desklets) addClone(desk, desklets, g.ox, g.oy);
+      }
 
       for (const wa of behind.filter(wa => !isDesktop(wa))) {
         addWindowClone(surface, wa, g.ox, g.oy);

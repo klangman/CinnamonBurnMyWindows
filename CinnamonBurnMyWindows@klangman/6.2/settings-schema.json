@@ -469,11 +469,12 @@
     "default": 0,
     "options": {
       "Wallpaper": 0,
-      "Black void": 1
+      "Black void": 1,
+      "Transparent": 2
     },
     "description": "Backdrop",
     "dependency" : "effect-selector=27",
-    "tooltip": "What is seen behind the panels as they turn. Wallpaper: the desktop stays in place and only the windows behind are on the panels. Black void: the desktop is on the panels too and flips with them, revealing a black void."
+    "tooltip": "What is seen behind the panels as they turn. Wallpaper: the desktop stays in place and only the windows behind are on the panels. Black void: the desktop is on the panels too and flips with them, revealing a black void. Transparent: nothing is drawn behind the panels, so the real screen shows through the gaps."
   },
 
   "aperture-panels-border-style": {

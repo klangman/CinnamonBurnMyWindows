@@ -54,7 +54,7 @@
     "effect-settings" : {
       "type" : "section",
       "title" : "Effect Specific Settings",
-      "keys" : ["aperture-panels-panel-size", "aperture-panels-wave-shape", "aperture-panels-flip-axis", "aperture-panels-backdrop", "aperture-panels-border-style", "aperture-panels-border-color", "aperture-panels-animation-time", "aperture-panels-open-sound", "aperture-panels-close-sound", "aperture-panels-reset",
+      "keys" : ["aperture-panels-panel-size", "aperture-panels-wave-shape", "aperture-panels-flip-axis", "aperture-panels-backdrop", "aperture-panels-border-style", "aperture-panels-border-color", "aperture-panels-animation-time", "aperture-panels-easter-egg", "aperture-panels-open-sound", "aperture-panels-close-sound", "aperture-panels-reset",
                 "apparition-shake-intensity", "apparition-twirl-intensity", "apparition-suction-intensity", "apparition-randomness", "apparition-animation-time", "apparition-open-sound", "apparition-close-sound", "apparition-reset",
                 "aura-glow-random-color", "aura-glow-start-hue", "aura-glow-speed", "aura-glow-saturation", "aura-glow-edge-size", "aura-glow-edge-hardness", "aura-glow-blur", "aura-glow-animation-time", "aura-glow-open-sound", "aura-glow-close-sound", "aura-glow-reset",
                 "doom-horizontal-scale", "doom-vertical-scale", "doom-pixel-size", "doom-animation-time", "doom-open-sound", "doom-close-sound", "doom-reset",
@@ -511,13 +511,20 @@
      "default": 2000
   },
 
+  "aperture-panels-easter-egg": {
+    "type": "switch",
+    "default": true,
+    "description": "🎁",
+    "dependency" : "effect-selector=27"
+  },
+
   "aperture-panels-reset" : {
      "type" : "custom",
      "file" : "CustomWidgets.py",
      "widget" : "ResetToDefault",
      "description" : "Reset to default",
      "dependency" : "effect-selector=27",
-     "keys" : ["aperture-panels-panel-size", "aperture-panels-wave-shape", "aperture-panels-flip-axis", "aperture-panels-backdrop", "aperture-panels-border-style", "aperture-panels-border-color", "aperture-panels-animation-time"]
+     "keys" : ["aperture-panels-panel-size", "aperture-panels-wave-shape", "aperture-panels-flip-axis", "aperture-panels-backdrop", "aperture-panels-border-style", "aperture-panels-border-color", "aperture-panels-animation-time", "aperture-panels-easter-egg"]
   },
 
   "aperture-panels-open-sound" : {

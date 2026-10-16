@@ -44,6 +44,12 @@ const FLIP_AXIS_RANDOM   = 2;
 const BACKDROP_BLACK_VOID  = 1;  // aperture-panels-backdrop: 0 = Wallpaper, 1 = Black void,
 const BACKDROP_TRANSPARENT = 2;  //                           2 = Transparent
 
+// Easter egg ("The cake is a lie!"): chance (0..1) that a cake appears on the backdrop,
+// in the gaps between the turning panels. The shader only draws it on windows at least
+// three times the cake's size in each direction (see CAKE_PX in aperture-panels.frag).
+// The mystery "🎁" switch (aperture-panels-easter-egg) turns it off.
+const CAKE_CHANCE = 0.05;
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // The window is split into a grid of panels (like the moving wall panels in the Portal //
 // games) which flip over one after another, revealing the window on their back when it //
@@ -79,6 +85,8 @@ var Effect = class Effect {
       shader._uBorderStyle  = shader.get_uniform_location('uBorderStyle');
       shader._uBorderColor  = shader.get_uniform_location('uBorderColor');
       shader._uBlackVoid    = shader.get_uniform_location('uBlackVoid');
+      shader._uShowCake     = shader.get_uniform_location('uShowCake');
+      shader._uCakePos      = shader.get_uniform_location('uCakePos');
     });
   }
 
@@ -112,6 +120,8 @@ var Effect = class Effect {
     }
     const borderStyle = settings.getValue('aperture-panels-border-style');
     const bc = Clutter.Color.from_string(settings.getValue('aperture-panels-border-color'))[1];
+    const showCake = settings.getValue('aperture-panels-easter-egg') && Math.random() < CAKE_CHANCE;
+    const cakePos  = [Math.random(), Math.random()];  // where in the window, see uCakePos
 
     return LayeredEffect.create(actor, shader, ctx, {
       factory:       this.shaderFactory,
@@ -134,6 +144,8 @@ var Effect = class Effect {
         // The shader paints the gaps between the panels black itself (a black wall actor
         // isn't drawn on GNOME / Mutter; the two versions share the shader).
         s.set_uniform_float(s._uBlackVoid,    1, [blackVoid ? 1 : 0]);
+        s.set_uniform_float(s._uShowCake,     1, [showCake ? 1 : 0]);
+        s.set_uniform_float(s._uCakePos,      2, cakePos);
       },
 
       onGeometry: (s, g) => {

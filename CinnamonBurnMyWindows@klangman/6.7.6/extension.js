@@ -30,6 +30,7 @@ const Glitch = require('./effects/Glitch.js');
 const Hexagon = require('./effects/Hexagon.js');
 const Incinerate = require('./effects/Incinerate.js');
 const MagicLamp = require('./effects/MagicLamp.js');
+const Materialize = require('./effects/Materialize.js');
 const Morph = require('./effects/Morph.js');
 const Matrix = require('./effects/Matrix.js');
 const Mushroom = require('./effects/Mushroom.js');
@@ -39,16 +40,19 @@ const PixelWheel = require('./effects/PixelWheel.js');
 const PixelWipe = require('./effects/PixelWipe.js');
 const Portal = require('./effects/Portal.js');
 const RGBWarp = require('./effects/RGBWarp.js');
+const Shredder = require('./effects/Shredder.js');
 const SnapOfDisintegration = require('./effects/SnapOfDisintegration.js');
 const TeamRocket = require('./effects/TeamRocket.js');
 const TRexAttack = require('./effects/TRexAttack.js');
 const TVEffect = require('./effects/TVEffect.js');
 const TVGlitch = require('./effects/TVGlitch.js');
+const VenetianBlinds = require('./effects/VenetianBlinds.js');
 const Wisps = require('./effects/Wisps.js');
 const Wormhole = require('./effects/Wormhole.js');
 
 const ShouldAnimateManager = require("ShouldAnimateManager.js");
 const Layers = require('./LayeredEffect.js');
+const RaiseEffect = require('./RaiseEffect.js');
 
 const Main = imports.ui.main;
 const Gio = imports.gi.Gio;
@@ -81,6 +85,7 @@ const Effect = {
   Hexagon:     {idx: 8,  name: "Hexagon"},
   Incinerate:  {idx: 9,  name: "Incinerate"},
   MagicLamp:   {idx: 26, name: "Magic Lamp"},
+  Materialize: {idx: 30, name: "Materialize"},
   Morph:       {idx: 29, name: "Morph"},
   Mushroom:    {idx: 25, name: "Mushroom"},
   Matrix:      {idx: 10, name: "Matrix"},
@@ -90,11 +95,13 @@ const Effect = {
   PixelWipe:   {idx: 14, name: "Pixel Wipe"},
   Portal:      {idx: 15, name: "Portal"},
   RGBWarp:     {idx: 24, name: "RGB Warp"},
+  Shredder:    {idx: 31, name: "Shredder"},
   SnapOfDisintegration: {idx: 16, name: "Snap Of Disintegration"},
   TeamRocket:  {idx: 23, name: "Team Rocket"},
   TRexAttack:  {idx: 17, name: "TRex Attack"},
   TVEffect:    {idx: 18, name: "TV Effect"},
   TVGlitch:    {idx: 19, name: "TV Glitch"},
+  VenetianBlinds: {idx: 32, name: "Venetian Blinds"},
   Wisps:       {idx: 20, name: "Wisps"},
   Wormhole:    {idx: 28, name: "Wormhole"},
   Randomized:  {idx: 999, name: "Randomized"},
@@ -106,6 +113,25 @@ function EffectIndex(name) {
     if (name == value.name) return value.idx;
   }
   return(undefined);
+}
+
+// The settings an effect uses when the selector that chose it has custom settings for it (see the
+// "effect-overrides" key and EffectSelector in CustomWidgets.py). Effects only call getValue(), so this
+// can be passed anywhere the settings object is. Keys without a custom value fall back to the global
+// settings (i.e. keys added by a newer version of the extension since the custom values were saved).
+// A new instance is created for every animation, so values that effects cache on the settings object
+// (i.e. Fire's settings.fireColor) don't leak into the global settings or other animations.
+class EffectProfile {
+  constructor(settings, values) {
+    this._settings = settings;
+    this._values = values;
+  }
+
+  getValue(key) {
+    if (Object.prototype.hasOwnProperty.call(this._values, key))
+      return this._values[key];
+    return this._settings.getValue(key);
+  }
 }
 
 const UUID = "CinnamonBurnMyWindows@klangman";
@@ -201,24 +227,39 @@ class BurnMyWindows {
          new AperturePanels.Effect(),
          new Wormhole.Effect(),
          new Morph.Effect(),
+         new Materialize.Effect(),
+         new Shredder.Effect(),
+         new VenetianBlinds.Effect(),
       ];
 
       // We will use extensionThis to refer to the extension inside the patched methods.
       extensionThis = this;
 
+      // Raise effects (see RaiseEffect.js). Only effects that say they support raising
+      // (static supportsRaise()) are offered, so this list is built from _ALL_EFFECTS.
+      this._raiseEffects = new Set();
+      this._raiseWatcher = new RaiseEffect.RaiseWatcher(
+         (entries) => this._startRaiseEffect(entries),
+         () => this._endRaiseEffects());
+      this._syncRaiseEffectOptions();
+      this._bindCustom("raise-effect", "raiseEffect", this._enableRaiseEffects);
+      this._bindCustom("power-raise-effect", "powerRaiseEffect", this._enableRaiseEffects);
+      this._settings.bind("power-onbattery", "powerOnBattery", this._enableRaiseEffects);
+      this._enableRaiseEffects();
+
       // Bind variables to setting effect values
-      this._settings.bind("minimize-effect", "minimizeEffect", this._enableMinimizeEffects);
-      this._settings.bind("unminimize-effect", "unminimizeEffect", this._enableMinimizeEffects);
-      this._settings.bind("power-minimize-effect", "powerMinimizeEffect", this._enableMinimizeEffects);
-      this._settings.bind("power-unminimize-effect", "powerUnminimizeEffect", this._enableMinimizeEffects);
-      this._settings.bind("open-window-effect", "openEffect");
-      this._settings.bind("dialog-open-effect", "dialogOpenEffect");
-      this._settings.bind("power-open-effect", "powerOpenEffect");
-      this._settings.bind("power-dialog-open-effect", "powerDialogOpenEffect");
-      this._settings.bind("close-window-effect", "closeEffect");
-      this._settings.bind("dialog-close-effect", "dialogCloseEffect");
-      this._settings.bind("power-close-effect", "powerCloseEffect");
-      this._settings.bind("power-dialog-close-effect", "powerDialogCloseEffect");
+      this._bindCustom("minimize-effect", "minimizeEffect", this._enableMinimizeEffects);
+      this._bindCustom("unminimize-effect", "unminimizeEffect", this._enableMinimizeEffects);
+      this._bindCustom("power-minimize-effect", "powerMinimizeEffect", this._enableMinimizeEffects);
+      this._bindCustom("power-unminimize-effect", "powerUnminimizeEffect", this._enableMinimizeEffects);
+      this._bindCustom("open-window-effect", "openEffect");
+      this._bindCustom("dialog-open-effect", "dialogOpenEffect");
+      this._bindCustom("power-open-effect", "powerOpenEffect");
+      this._bindCustom("power-dialog-open-effect", "powerDialogOpenEffect");
+      this._bindCustom("close-window-effect", "closeEffect");
+      this._bindCustom("dialog-close-effect", "dialogCloseEffect");
+      this._bindCustom("power-close-effect", "powerCloseEffect");
+      this._bindCustom("power-dialog-close-effect", "powerDialogCloseEffect");
       this._settings.bind("enable-sound", "enableSound", this._enableSounds);
 
       // WindowTracker so we can map windows to application
@@ -252,6 +293,9 @@ class BurnMyWindows {
          const shader = actor.get_effect('burn-my-windows-effect');
          if (shader) {
             shader.endAnimation();
+         }
+         if (actor._bmwRaiseShader) {
+            actor._bmwRaiseShader.endAnimation();
          }
       });
   }
@@ -381,9 +425,11 @@ class BurnMyWindows {
         if (effects[i][1].idx < 900) {// An idx of 900 or higher is reserved for non-effect types, i.e. None and Random
            let element = randomInclude.find((element) => element.name == effects[i][1].name);
            if (element) {
+              // Rows from before raise effects existed get the raise box ticked.
+              if (element.raise === undefined) element.raise = true;
               newRandomInclude.push(element);
            } else {
-              newRandomInclude.push( {name: effects[i][1].name, open: true, close: true, minimize: true, unminimize: true} );
+              newRandomInclude.push( {name: effects[i][1].name, open: true, close: true, minimize: true, unminimize: true, raise: true} );
            }
         }
      }
@@ -477,7 +523,7 @@ class BurnMyWindows {
       if (extensionThis.enableSound) {
         let soundSettings = new Gio.Settings({ schema_id: "org.cinnamon.sounds" });
         if (soundSettings && soundSettings.get_boolean(eventName+"-enabled")) {
-           let sfx = chosenEffect.effect.constructor.getSFX(extensionThis._settings, (event & ShouldAnimateManager.Events.MapWindow) || (event & ShouldAnimateManager.Events.Unminimize) );
+           let sfx = chosenEffect.effect.constructor.getSFX(chosenEffect.profile, (event & ShouldAnimateManager.Events.MapWindow) || (event & ShouldAnimateManager.Events.Unminimize) );
            if (sfx)
               Main.soundManager.playSoundFile(0, sfx);
            else
@@ -525,6 +571,13 @@ class BurnMyWindows {
     // Make sure the window picker isn't left holding the desktop
     this._endPick();
 
+    // Stop watching for raised windows and remove any running raise effect
+    if (this._raiseWatcher) {
+      this._raiseWatcher.disable();
+      this._raiseWatcher = null;
+    }
+    this._endRaiseEffects();
+
     // Stop monitoring signals
     this._signalManager.disconnectAllSignals();
 
@@ -560,15 +613,19 @@ class BurnMyWindows {
 
     //log( `Battery state: ${this._upDisplayDevice.state}  ${this._upDisplayDevice.percentage}%` );
 
+    // The "effect-overrides" scope of the selector that chose the effect (its settings key name),
+    // or null when there can't be custom settings (application rules, for now)
+    let scope = null;
+
     switch (event) {
       case ShouldAnimateManager.Events.MapWindow:
         if (appRule) {
           effectIdx = appRule.open;
         } else {
           if (power) {
-            effectIdx = (!dialog) ? this.powerOpenEffect : this.powerDialogOpenEffect;
+            scope = (!dialog) ? "power-open-effect" : "power-dialog-open-effect";
           } else {
-            effectIdx = (!dialog) ? this.openEffect : this.dialogOpenEffect;
+            scope = (!dialog) ? "open-window-effect" : "dialog-open-effect";
           }
         }
         break;
@@ -577,9 +634,9 @@ class BurnMyWindows {
           effectIdx = appRule.close;
         } else {
           if (power) {
-            effectIdx = (!dialog) ? this.powerCloseEffect : this.powerDialogCloseEffect;
+            scope = (!dialog) ? "power-close-effect" : "power-dialog-close-effect";
           } else {
-            effectIdx = (!dialog) ? this.closeEffect : this.dialogCloseEffect;
+            scope = (!dialog) ? "close-window-effect" : "dialog-close-effect";
           }
         }
         break;
@@ -587,23 +644,26 @@ class BurnMyWindows {
         if (appRule) {
           effectIdx = appRule.minimize;
         } else {
-          effectIdx = (power) ? this.powerMinimizeEffect : this.minimizeEffect;
+          scope = (power) ? "power-minimize-effect" : "minimize-effect";
         }
         break;
       case ShouldAnimateManager.Events.Unminimize:
         if (appRule) {
           effectIdx = appRule.unminimize;
         } else {
-          effectIdx = (power) ? this.powerUnminimizeEffect : this.unminimizeEffect;
+          scope = (power) ? "power-unminimize-effect" : "unminimize-effect";
         }
         break;
+    }
+    if (scope) {
+      effectIdx = this[this._scopeProperty[scope]];
     }
     if (effectIdx === Effect.None.idx) {
       // No effect should be applied
       return(null);
     } else if (effectIdx != Effect.Randomized.idx) {
       // Return the effect that the setting reflects
-      return {effect: this._ALL_EFFECTS[effectIdx], profile: this._settings};
+      return {effect: this._ALL_EFFECTS[effectIdx], profile: this._makeProfile(scope, effectIdx)};
     } else {
       // Add the effect indexes for each effect that is included in this events randomized set
       let effectOptions = [];
@@ -631,11 +691,62 @@ class BurnMyWindows {
       }
       // If any random options are enabled, return a randomly chosen effect, else return null
       if (effectOptions.length > 0) {
-        return {effect: this._ALL_EFFECTS[effectOptions[(Math.floor(Math.random() * effectOptions.length))]], profile: this._settings};
+        let randomIdx = effectOptions[(Math.floor(Math.random() * effectOptions.length))];
+        // A randomly chosen effect uses the custom settings from the Randomized list (its gear buttons) for
+        // this event, never those of the selector that chose Randomized.
+        let randomScope = (event === ShouldAnimateManager.Events.MapWindow)     ? "random-open" :
+                          (event === ShouldAnimateManager.Events.DestroyWindow) ? "random-close" :
+                          (event === ShouldAnimateManager.Events.Minimize)      ? "random-minimize" :
+                          (event === ShouldAnimateManager.Events.Unminimize)    ? "random-unminimize" : null;
+        return {effect: this._ALL_EFFECTS[randomIdx], profile: this._makeProfile(randomScope, randomIdx)};
       } else {
         return null;
       }
     }
+  }
+
+  // Like this._settings.bind(), for keys with the "custom" settings type (i.e. the EffectSelector keys),
+  // which bind() refuses since it only accepts Cinnamon's built in types. getValue(), setValue() and the
+  // "changed::<key>" signal work for keys of any type.
+  _bindCustom(key, property, callback) {
+    Object.defineProperty(this, property, {
+      get: () => this._settings.getValue(key),
+      set: (value) => this._settings.setValue(key, value),
+      enumerable: true,
+      configurable: true
+    });
+    if (callback) {
+      this._signalManager.connect(this._settings, "changed::" + key, () => callback.call(this));
+    }
+  }
+
+  // The bound property holding each selector's value, by "effect-overrides" scope (the selector's key name)
+  get _scopeProperty() {
+    return {
+      "open-window-effect": "openEffect",               "dialog-open-effect": "dialogOpenEffect",
+      "close-window-effect": "closeEffect",             "dialog-close-effect": "dialogCloseEffect",
+      "minimize-effect": "minimizeEffect",              "unminimize-effect": "unminimizeEffect",
+      "power-open-effect": "powerOpenEffect",           "power-dialog-open-effect": "powerDialogOpenEffect",
+      "power-close-effect": "powerCloseEffect",         "power-dialog-close-effect": "powerDialogCloseEffect",
+      "power-minimize-effect": "powerMinimizeEffect",   "power-unminimize-effect": "powerUnminimizeEffect"
+    };
+  }
+
+  // The settings the given effect should use: the selector's custom settings for that effect when they
+  // are enabled (see EffectSelector in CustomWidgets.py), otherwise the global settings.
+  _makeProfile(scope, effectIdx) {
+    if (!scope) return this._settings;
+    let overrides = this._settings.getValue("effect-overrides");
+    let entry = (overrides && overrides[scope]) ? overrides[scope][String(effectIdx)] : null;
+    if (!entry || !entry.enabled || !entry.values) return this._settings;
+    let profile = new EffectProfile(this._settings, entry.values);
+    // Effects with presets (Fire, Mushroom) compute values from the settings and store them on the
+    // settings object for their shaders to use, so they need to do that for this profile as well.
+    let effect = this._ALL_EFFECTS[effectIdx];
+    if (effect && typeof effect._setupUsingPresets === "function") {
+      effect._setupUsingPresets(profile);
+    }
+    return profile;
   }
 
   // Get the application specific rules for the given metaWindow
@@ -692,7 +803,7 @@ class BurnMyWindows {
     // windows are faded in / out scaled up / down slightly by GNOME Shell. Here, we tweak
     // the transitions so that nothing changes. The window stays opaque and is scaled to
     // actorScale.
-    const actorScale = effect.constructor.getActorScale(this._settings, forOpening, actor);
+    const actorScale = effect.constructor.getActorScale(profile, forOpening, actor);
 
     // Effects that draw on more than just the window (e.g. Aperture Panels) build their own
     // actors in createLayers() (below), instead of using the canvas or scaling.
@@ -969,6 +1080,198 @@ class BurnMyWindows {
       updateInputRect();
       shader._bmwInputRectId = shader.connect('update-animation', updateInputRect);
     }
+  }
+
+  // ---- Raise effects ----
+  // See RaiseEffect.js. The effect runs, in its hide direction, on a "cover" actor holding
+  // clones of the windows the raised window was below, so the covered parts of the raised
+  // window appear as the effect removes what covered them.
+
+  // Indexes of the effects that can be used as a raise effect.
+  _raiseCapableIndexes() {
+    let indexes = [];
+    for (let i = 0; i < this._ALL_EFFECTS.length; i++) {
+      const effect = this._ALL_EFFECTS[i];
+      if (effect && typeof effect.constructor.supportsRaise === 'function' &&
+          effect.constructor.supportsRaise()) {
+        indexes.push(i);
+      }
+    }
+    return indexes;
+  }
+
+  // The raise effect combobox only offers raise capable effects (plus Randomized / None).
+  _syncRaiseEffectOptions() {
+    const settingsData = this._settings.settingsData;
+    if (!settingsData["raise-effect"]) return;
+    const capable = this._raiseCapableIndexes();
+
+    // The Random Effects list (RandomIncludeList in CustomWidgets.py) only shows a Raise
+    // check box for these effects. The settings dialog can't ask the effects themselves.
+    const capableNames = Object.values(Effect)
+      .filter(effect => effect.idx < 900 && capable.includes(effect.idx))
+      .map(effect => effect.name);
+    const oldNames = this._settings.getValue("raise-capable-effects") || [];
+    if (oldNames.join("\n") !== capableNames.join("\n")) {
+      this._settings.setValue("raise-capable-effects", capableNames);
+    }
+    let options = {};
+    for (let effect of Object.values(Effect)) {
+      if (effect.idx < 900 && capable.includes(effect.idx)) {
+        options[effect.name] = effect.idx;
+      }
+    }
+    options[Effect.Randomized.name] = Effect.Randomized.idx;
+    options[Effect.None.name] = Effect.None.idx;
+    // The General tab's and the Power tab's raise effect selectors.
+    let changed = false;
+    for (const key of ["raise-effect", "power-raise-effect"]) {
+      if (!settingsData[key] || this._optionsEqual(settingsData[key].options, options)) continue;
+      settingsData[key].options = options;
+      // An effect that lost raise support (or was retired) falls back to None.
+      if (!Object.values(options).includes(settingsData[key].value)) {
+        settingsData[key].value = Effect.None.idx;
+      }
+      changed = true;
+    }
+    if (changed) {
+      this._settings._saveToFile();
+    }
+  }
+
+  // True while on battery below the Power tab's threshold (if that tab is enabled): the
+  // Power tab's effects are used then.
+  _onLowPower() {
+    return this._settings.getValue("power-onbattery") === true &&
+           this._upDisplayDevice.state === UPowerGlib.DeviceState.DISCHARGING &&
+           this._upDisplayDevice.percentage < this._settings.getValue("power-percent");
+  }
+
+  // Only watch for raised windows while a raise effect is selected.
+  _enableRaiseEffects() {
+    if (!this._raiseWatcher) return;
+    // Watch while either raise effect could be used; which one is decided per raise, as the
+    // battery level changes (see _chooseRaiseEffect()).
+    const powerUsed = this.powerOnBattery === true && this.powerRaiseEffect !== Effect.None.idx;
+    if (this.raiseEffect !== Effect.None.idx || powerUsed) {
+      this._raiseWatcher.enable();
+    } else {
+      this._raiseWatcher.disable();
+      this._endRaiseEffects();
+    }
+  }
+
+  // Returns {effect, profile} (profile: the settings the effect uses, see _makeProfile()), or null.
+  _chooseRaiseEffect() {
+    const lowPower = this._onLowPower();
+    const idx = lowPower ? this.powerRaiseEffect : this.raiseEffect;
+    if (idx === Effect.None.idx || idx === undefined) return null;
+    const capable = this._raiseCapableIndexes();
+    if (idx === Effect.Randomized.idx) {
+      // The raise capable effects ticked in the Raise column of the Random Effects list.
+      const randomInclude = this._settings.getValue("random-include") || [];
+      const options = capable.filter(i => randomInclude.some(r =>
+        r.raise !== false && EffectIndex(r.name) === i));
+      if (options.length === 0) return null;
+      const randomIdx = options[Math.floor(Math.random() * options.length)];
+      return {effect: this._ALL_EFFECTS[randomIdx], profile: this._makeProfile("random-raise", randomIdx)};
+    }
+    if (!capable.includes(idx)) return null;
+    return {effect: this._ALL_EFFECTS[idx], profile: this._makeProfile(lowPower ? "power-raise-effect" : "raise-effect", idx)};
+  }
+
+  // Stop every running raise effect (they clean up in their end-animation handler).
+  _endRaiseEffects() {
+    if (!this._raiseEffects) return;
+    for (const shader of Array.from(this._raiseEffects)) {
+      shader.endAnimation();
+    }
+  }
+
+  // entries: from RaiseWatcher, one per window of the raised family (a window and its
+  // dialogs) that was covered, bottom to top. They all get the same effect, each on a cover
+  // of its own; the covers are stacked in the same order, so a dialog's is above its parent's.
+  _startRaiseEffect(entries) {
+    // Not windows that are still opening / unminimizing (or animated by something else).
+    entries = entries.filter(e => {
+      const actor = e.window.get_compositor_private();
+      return actor && !actor._bmwEffectContainer && !actor.get_effect('burn-my-windows-effect');
+    });
+    if (entries.length === 0) return;
+
+    const chosen = this._chooseRaiseEffect();
+    if (!chosen) return;
+    const {effect, profile} = chosen;
+
+    // A cover from an earlier raise sits above all windows, so it would hide these.
+    this._endRaiseEffects();
+
+    const testMode = this._settings.getValue('test-mode');
+    // Custom settings for raising (see EffectSettingsDialog in CustomWidgets.py) can have their own duration
+    const duration = testMode ? 8000 : profile.getValue('raise-animation-time');
+
+    // Each window's shadow ring leaves out the frames of the family windows below it: their
+    // own covers animate there (see createCover()).
+    const below = [];
+    for (const e of entries) {
+      this._startRaiseCover(e.window, e.coverers, e.above, effect, profile, duration, testMode, below.slice());
+      const f = e.window.get_frame_rect();
+      below.push({x: f.x, y: f.y, width: f.width, height: f.height});
+    }
+  }
+
+  // One window's cover and shader (see _startRaiseEffect()).
+  _startRaiseCover(metaWindow, coverers, above, effect, profile, duration, testMode, exclude) {
+    const actor = metaWindow.get_compositor_private();
+
+    const {group: coverGroup, target: cover, ring} = RaiseEffect.createCover(metaWindow, coverers, above, exclude);
+    const shader = effect.shaderFactory.getShader();
+    cover.add_effect_with_name('burn-my-windows-raise-effect', shader);
+    actor._bmwRaiseShader = shader;
+    this._raiseEffects.add(shader);
+
+    // The cover is a snapshot of where the windows were. If the raised window moves or
+    // resizes (e.g. the click that raised it starts a drag), just stop.
+    const windowIds = [
+      metaWindow.connect('position-changed', () => shader.endAnimation()),
+      metaWindow.connect('size-changed', () => shader.endAnimation()),
+      metaWindow.connect('unmanaged', () => shader.endAnimation())
+    ];
+
+    // The ring around the frame (the raised window's shadow and border) has no effect on it;
+    // it fades out so they fade in, between RAISE_RING_FADE_START and RAISE_RING_FADE_END of
+    // the animation, eased. Not from the start: when the raised window was covered entirely
+    // (e.g. by a modal dialog's parent), the effect still shows the covering window over the
+    // whole frame for a while, and an early shadow looks like a dimmed copy of that window
+    // around it.
+    const RAISE_RING_FADE_START = 0.3;
+    const RAISE_RING_FADE_END   = 0.9;
+    const fadeRing = (progress) => {
+      const t = Math.max(0, Math.min(1, (progress - RAISE_RING_FADE_START) /
+                                        (RAISE_RING_FADE_END - RAISE_RING_FADE_START)));
+      ring.opacity = Math.round(255 * (1 - t * t * (3 - 2 * t)));
+    };
+    const ringId = shader._timeline.connect('new-frame', (t) => {
+      fadeRing(testMode ? 0.5 : t.get_progress());
+    });
+
+    const endID = shader.connect('end-animation', () => {
+      shader.disconnect(endID);
+      shader._timeline.disconnect(ringId);
+      for (const id of windowIds) {
+        try { metaWindow.disconnect(id); } catch (e) { /* window already gone */ }
+      }
+      this._raiseEffects.delete(shader);
+      if (actor._bmwRaiseShader === shader) actor._bmwRaiseShader = null;
+      cover.remove_effect(shader);
+      shader.returnToFactory();
+      coverGroup.destroy();  // also destroys the cover
+    });
+
+    // forOpening = false: the effect makes the cover (what used to be on top) disappear.
+    shader.beginAnimation(profile, false, testMode, duration, cover);
+    // Tells shaders that care (e.g. Incinerate) to draw only where the cover has content.
+    shader.set_uniform_float(shader._uRaise, 1, [1]);
   }
 
   // An empty, clipped actor covering `rect` (stage coordinates).

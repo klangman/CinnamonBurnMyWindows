@@ -88,6 +88,13 @@ var Effect = class Effect {
     return _('Pixelate');
   }
 
+  // Whether this effect can be used as a raise effect (see RaiseEffect.js). There it runs
+  // in its close direction on a cover holding the windows that used to be on top of the
+  // raised window, so the covered parts of the window pixelate into view.
+  static supportsRaise() {
+    return true;
+  }
+
   // -------------------------------------------------------------------- API for prefs.js
 
   // This is called by the preferences dialog whenever a new effect profile is loaded. It

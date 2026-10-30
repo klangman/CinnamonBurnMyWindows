@@ -42,7 +42,9 @@ const WAVE_SHAPE_RANDOM  = 5;
 const FLIP_AXIS_VERTICAL = 0;
 const FLIP_AXIS_RANDOM   = 2;
 const BACKDROP_BLACK_VOID  = 1;  // aperture-panels-backdrop: 0 = Wallpaper, 1 = Black void,
-const BACKDROP_TRANSPARENT = 2;  //                           2 = Transparent
+const BACKDROP_TRANSPARENT = 2;  //                           2 = Transparent,
+const BACKDROP_STAR_FIELD  = 3;  //                           3 = Star field,
+const BACKDROP_NEBULA      = 4;  //                           4 = Nebula
 
 // Easter egg ("The cake is a lie!"): chance (0..1) that a cake appears on the backdrop,
 // in the gaps between the turning panels. The shader only draws it on windows at least
@@ -57,9 +59,9 @@ const CAKE_CHANCE = 0.05;
 //                                                                                      //
 // Uses the standard layers of LayeredEffect.js, with a wall:                           //
 //   wall    = the desktop: wallpaper, icons, desklets (no shader); black with the      //
-//             "Black void" backdrop (the shader also paints the gaps black then)       //
-//   surface = the panels' front: the windows behind (uLayer = 0), and the desktop     //
-//             with the "Black void" backdrop                                           //
+//             "Black void" / "Star field" backdrops (the shader paints the gaps then)  //
+//   surface = the panels' front: the windows behind (uLayer = 0), and the desktop      //
+//             with the "Black void" / "Star field" backdrops                           //
 //   window  = the panels' back: a clone of the window itself (uLayer = 1)              //
 //   above   = clones of the windows above the window (no shader)                       //
 // See resources/shaders/aperture-panels.frag.                                          //
@@ -87,6 +89,10 @@ var Effect = class Effect {
       shader._uBlackVoid    = shader.get_uniform_location('uBlackVoid');
       shader._uShowCake     = shader.get_uniform_location('uShowCake');
       shader._uCakePos      = shader.get_uniform_location('uCakePos');
+      shader._uStarField    = shader.get_uniform_location('uStarField');
+      shader._uNebula       = shader.get_uniform_location('uNebula');
+      shader._uStarSeed     = shader.get_uniform_location('uStarSeed');
+      shader._uScreenOrigin = shader.get_uniform_location('uScreenOrigin');
     });
   }
 
@@ -104,9 +110,14 @@ var Effect = class Effect {
     // desktop (wallpaper, desktop icons, desklets) is painted on the panels too, so it flips
     // with them and the wall is black.
     // "Transparent": no wall and no desktop at all; the real screen shows through the gaps.
+    // "Star field": like "Black void", with stars in the void (drawn by the shader).
+    // "Nebula": the star field with a colourful nebula behind the stars.
     const backdrop    = settings.getValue('aperture-panels-backdrop');
-    const blackVoid   = backdrop === BACKDROP_BLACK_VOID;
+    const nebula      = backdrop === BACKDROP_NEBULA;
+    const starField   = backdrop === BACKDROP_STAR_FIELD || nebula;
+    const blackVoid   = backdrop === BACKDROP_BLACK_VOID || starField;
     const transparent = backdrop === BACKDROP_TRANSPARENT;
+    const starSeed    = Math.random();  // a different sky for each animation
 
     // The user's settings, read once: both shaders must get the same values, including the
     // same pick for the "Random" options.
@@ -146,11 +157,17 @@ var Effect = class Effect {
         s.set_uniform_float(s._uBlackVoid,    1, [blackVoid ? 1 : 0]);
         s.set_uniform_float(s._uShowCake,     1, [showCake ? 1 : 0]);
         s.set_uniform_float(s._uCakePos,      2, cakePos);
+        s.set_uniform_float(s._uStarField,    1, [starField ? 1 : 0]);
+        s.set_uniform_float(s._uNebula,       1, [nebula ? 1 : 0]);
+        s.set_uniform_float(s._uStarSeed,     1, [starSeed]);
       },
 
       onGeometry: (s, g) => {
         s.set_uniform_float(s._uFrame, 4, [g.frame.x, g.frame.y, g.frame.width, g.frame.height]);
         s.set_uniform_float(s._uCell,  2, [g.cellW, g.cellH]);
+        // The layers' top-left on the screen: the stars are fixed to the screen, so they
+        // don't move if the layers are re-placed while a window opens.
+        s.set_uniform_float(s._uScreenOrigin, 2, [g.ox, g.oy]);
       }
     });
   }

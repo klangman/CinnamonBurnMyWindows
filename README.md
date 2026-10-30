@@ -35,15 +35,18 @@ This extension needs the Cinnamon.GLSLEffect class which is only available in Ci
 - Glitch
 - Hexagon
 - Incinerate
+- Materialize  (new)
 - Mushroom  (new)
 - Pixelate
 - Pixel Wheel
 - Pixel Wipe
 - Portal
 - RGB Warp  (new)
+- Shredder  (new)
 - Team Rocket  (new)
 - TV Effect
 - TV Glitch
+- Venetian Blinds  (new)
 - Wisps
 
 ### Effects working in Cinnamon 6.7.6 (Mint 23) and up:

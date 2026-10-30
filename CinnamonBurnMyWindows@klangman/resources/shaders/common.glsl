@@ -40,6 +40,10 @@ uniform bool uIsFullscreen;
 uniform float uProgress;
 uniform float uDuration;
 
+// 1.0 while the effect runs as a raise effect (see RaiseEffect.js), 0.0 otherwise. The
+// texture is then the windows that covered the raised window, transparent elsewhere.
+uniform float uRaise;
+
 #if defined(KWIN)  // --------------------------------------------------------------------
 
 #if defined(PLASMA6)

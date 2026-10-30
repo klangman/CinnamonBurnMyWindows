@@ -161,6 +161,13 @@ var Effect = class Effect {
   // The getActorScale() is called from extension.js to adjust the actor's size during the
   // animation. This is useful if the effect requires drawing something beyond the usual
   // bounds of the actor. This only works for GNOME 3.38+.
+  // Whether this effect can be used as a raise effect (see RaiseEffect.js). The parts of
+  // the raised window that were covered burn into view; with incinerate-use-pointer the
+  // fire starts where the window was clicked.
+  static supportsRaise() {
+    return true;
+  }
+
   static getActorScale(settings, forOpening, actor) {
     return {x: 1.0, y: 1.0};
   }

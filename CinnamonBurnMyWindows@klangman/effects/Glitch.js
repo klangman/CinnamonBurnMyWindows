@@ -111,6 +111,12 @@ var Effect = class Effect {
 
   // ---------------------------------------------------------------- API for extension.js
 
+  // Whether this effect can be used as a raise effect (see RaiseEffect.js). The windows that
+  // covered the raised window glitch away.
+  static supportsRaise() {
+    return true;
+  }
+
   // The getActorScale() is called from extension.js to adjust the actor's size during the
   // animation. This is useful if the effect requires drawing something beyond the usual
   // bounds of the actor. This only works for GNOME 3.38+.

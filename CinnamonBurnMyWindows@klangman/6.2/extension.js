@@ -616,11 +616,14 @@ class BurnMyWindows {
     // The "effect-overrides" scope of the selector that chose the effect (its settings key name),
     // or null when there can't be custom settings (application rules, for now)
     let scope = null;
+    // The "effect-overrides" scope of the application rule's effect (see AppRulesList in CustomWidgets.py)
+    let appScope = null;
 
     switch (event) {
       case ShouldAnimateManager.Events.MapWindow:
         if (appRule) {
           effectIdx = appRule.open;
+          appScope = this._appRuleScope(appRule, "open");
         } else {
           if (power) {
             scope = (!dialog) ? "power-open-effect" : "power-dialog-open-effect";
@@ -632,6 +635,7 @@ class BurnMyWindows {
       case ShouldAnimateManager.Events.DestroyWindow:
         if (appRule) {
           effectIdx = appRule.close;
+          appScope = this._appRuleScope(appRule, "close");
         } else {
           if (power) {
             scope = (!dialog) ? "power-close-effect" : "power-dialog-close-effect";
@@ -643,6 +647,7 @@ class BurnMyWindows {
       case ShouldAnimateManager.Events.Minimize:
         if (appRule) {
           effectIdx = appRule.minimize;
+          appScope = this._appRuleScope(appRule, "minimize");
         } else {
           scope = (power) ? "power-minimize-effect" : "minimize-effect";
         }
@@ -650,6 +655,7 @@ class BurnMyWindows {
       case ShouldAnimateManager.Events.Unminimize:
         if (appRule) {
           effectIdx = appRule.unminimize;
+          appScope = this._appRuleScope(appRule, "unminimize");
         } else {
           scope = (power) ? "power-unminimize-effect" : "unminimize-effect";
         }
@@ -663,7 +669,7 @@ class BurnMyWindows {
       return(null);
     } else if (effectIdx != Effect.Randomized.idx) {
       // Return the effect that the setting reflects
-      return {effect: this._ALL_EFFECTS[effectIdx], profile: this._makeProfile(scope, effectIdx)};
+      return {effect: this._ALL_EFFECTS[effectIdx], profile: this._makeProfile(appScope || scope, effectIdx)};
     } else {
       // Add the effect indexes for each effect that is included in this events randomized set
       let effectOptions = [];
@@ -734,6 +740,12 @@ class BurnMyWindows {
 
   // The settings the given effect should use: the selector's custom settings for that effect when they
   // are enabled (see EffectSelector in CustomWidgets.py), otherwise the global settings.
+  // The "effect-overrides" scope of an application rule's effect for an event. A rule only has custom settings
+  // once it has an id, which the settings window gives it the first time its gear is used.
+  _appRuleScope(rule, event) {
+    return (rule && rule.id) ? "app-" + rule.id + "-" + event : null;
+  }
+
   _makeProfile(scope, effectIdx) {
     if (!scope) return this._settings;
     let overrides = this._settings.getValue("effect-overrides");

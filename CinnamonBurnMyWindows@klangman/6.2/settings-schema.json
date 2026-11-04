@@ -116,7 +116,9 @@
   },
 
   "app-rules": {
-    "type" : "list",
+    "type" : "custom",
+    "file" : "CustomWidgets.py",
+    "widget" : "AppRulesList",
     "description" : "Application Specific Rules",
     "columns" : [
         {"id": "enabled",     "title": "Enabled",      "type": "boolean", "default": true},
@@ -150,7 +152,7 @@
         },
         {"id": "application", "title": "Application",  "type": "string"}
     ],
-    "tooltip": "A list of applications with special effect rules. The application can be a desktop file name or a WM_CLASS name",
+    "tooltip": "A list of applications with special effect rules. The application can be a desktop file name or a WM_CLASS name. Click a rule, then click a cell to change it. Hover over an effect and click the gear icon beside it to configure custom effect settings for that application.",
     "default": [ { "enabled": true,
                    "open": 1000,
                    "close": 1000,

@@ -523,7 +523,12 @@ class RandomIncludeList(SettingsWidget):
          if gears and col["id"] in RANDOM_SCOPE_COLUMNS:
             gear = GearCellRenderer()
             gear.connect("clicked", self.on_gear_clicked, i)
-            column.pack_start(gear, False)
+            # The check box and the gear share the column's spare width (both expand): the check box sits at the
+            # right of its share and the gear at the left of its share, so they end up side by side in the middle
+            # of the column instead of the gear being pushed to the far right.
+            renderer.set_alignment(1.0, 0.5)
+            gear.set_alignment(0.0, 0.5)
+            column.pack_start(gear, True)
             column.set_cell_data_func(gear, self.gear_data_func, i)
             self.gearRenderers[i] = gear
          self.view.append_column(column)
@@ -1179,7 +1184,8 @@ class GearCellRenderer(Gtk.CellRendererPixbuf):
    def __init__(self):
       Gtk.CellRendererPixbuf.__init__(self)
       self.set_property("mode", Gtk.CellRendererMode.ACTIVATABLE)
-      self.set_fixed_size(24, -1)
+      self.set_padding(4, 0)          # The gap between the check box and the gear
+      self.set_fixed_size(24, -1)     # 16px icon + padding
 
    def do_activate(self, event, widget, path, background_area, cell_area, flags):
       self.emit("clicked", path)
@@ -1325,5 +1331,333 @@ class EffectSelector(SettingsWidget):
       dialog.run()
       dialog.destroy()
       self.update_button()
+
+
+# The Application Specific Rules table. It replaces Cinnamon's stock list (whose cells can't hold a gear) and is
+# edited in place: the Enabled check box, a drop down for each effect and the application name typed into its
+# cell, with Add / Remove / Move buttons below. Each effect cell has a custom settings gear, shown the same way as
+# in the Randomized list (always when custom settings are in use, otherwise only in the cell under the pointer),
+# but not for Randomized or None. The stored rows keep the stock list's fields, so the extension reads them as
+# before. Custom settings belong to a rule through an "id" the rule gets the first time its gear is used, so they
+# survive renaming the application; their scope is "app-<id>-<event>" (see app_rule_scope()).
+import uuid
+
+APP_RULE_EVENTS = ("open", "close", "minimize", "unminimize")
+
+def app_rule_scope(rule_id, event):
+   return f"app-{rule_id}-{event}"
+
+class AppRulesList(SettingsWidget):
+   # Model columns: the row's dict (so unknown fields, like "id", survive), Enabled, the four effects, Application
+   COL_DATA, COL_ENABLED, COL_EFFECT, COL_APP = 0, 1, 2, 6
+
+   def __init__(self, info, key, settings):
+      # The patch is normally applied when this module is imported (see patch_revealer()), this is just a safety net
+      patch_revealer()
+
+      SettingsWidget.__init__(self)
+      self.set_orientation(Gtk.Orientation.VERTICAL)
+      self.set_spacing(4)
+      self.key = key
+      self.settings = settings
+      self.info = info
+      self.updating = False
+      self.hoverCell = None    # (row index, event index) under the mouse pointer, where a plain gear is shown
+      self.gearRenderers = {}  # event index -> its GearCellRenderer
+      self.columns = {c["id"]: c for c in info.get("columns", [])}
+      self.gears = settings.has_key(OVERRIDES_KEY)
+      if self.gears:
+         add_icon_search_path()
+
+      self.store = Gtk.ListStore(object, bool, int, int, int, int, str)
+      self.view = Gtk.TreeView(model=self.store)
+      self.view.set_enable_search(False)
+
+      toggle = Gtk.CellRendererToggle()
+      toggle.set_activatable(True)
+      toggle.connect("toggled", self.on_enabled_toggled)
+      column = Gtk.TreeViewColumn(self.title("enabled", _("Enabled")), toggle, active=self.COL_ENABLED)
+      self.view.append_column(column)
+
+      for i, event in enumerate(APP_RULE_EVENTS):
+         options = Gtk.ListStore(str, int)
+         for label, value in self.effect_options(event):
+            options.append([label, value])
+         combo = Gtk.CellRendererCombo(model=options, text_column=0, has_entry=False, editable=True)
+         combo.connect("changed", self.on_effect_changed, i)
+         column = Gtk.TreeViewColumn(self.title(event, event.capitalize()))
+         column.pack_start(combo, True)
+         column.set_cell_data_func(combo, self.effect_data_func, i)
+         if self.gears:
+            # Clicks on the gear are caught in on_button_press(): with an editable cell (the drop down) in the
+            # column, GTK's first click on a row only moves the cursor to it and doesn't activate the gear.
+            gear = GearCellRenderer()
+            column.pack_start(gear, False)
+            column.set_cell_data_func(gear, self.gear_data_func, i)
+            self.gearRenderers[i] = gear
+         column.set_resizable(True)
+         self.view.append_column(column)
+
+      text = Gtk.CellRendererText(editable=True)
+      text.connect("edited", self.on_application_edited)
+      self.appColumn = Gtk.TreeViewColumn(self.title("application", _("Application")), text, text=self.COL_APP)
+      self.appColumn.set_expand(True)
+      self.appColumn.set_resizable(True)
+      self.view.append_column(self.appColumn)
+
+      scroller = Gtk.ScrolledWindow()
+      scroller.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+      scroller.set_shadow_type(Gtk.ShadowType.ETCHED_IN)
+      scroller.set_size_request(-1, info.get("height", 200))
+      scroller.add(self.view)
+      self.pack_start(scroller, True, True, 0)
+
+      # Add / Remove / Move up / Move down
+      buttons = Gtk.Box(spacing=0)
+      buttons.get_style_context().add_class("linked")
+      self.buttons = {}
+      for name, icon, tooltip, callback in (
+            ("add",    "list-add-symbolic",    _("Add a rule"),                  lambda b: self.on_add()),
+            ("remove", "list-remove-symbolic", _("Remove the selected rule"),    lambda b: self.on_remove()),
+            ("up",     "go-up-symbolic",       _("Move the selected rule up"),   lambda b: self.on_move(-1)),
+            ("down",   "go-down-symbolic",     _("Move the selected rule down"), lambda b: self.on_move(1))):
+         button = Gtk.Button.new_from_icon_name(icon, Gtk.IconSize.BUTTON)
+         button.set_tooltip_text(tooltip)
+         button.connect("clicked", callback)
+         buttons.pack_start(button, False, False, 0)
+         self.buttons[name] = button
+      self.pack_start(buttons, False, False, 0)
+
+      self.listTooltip = info.get("tooltip")
+      if self.gears:
+         self.view.connect("button-press-event", self.on_button_press)
+         self.view.connect("motion-notify-event", self.on_motion)
+         self.view.connect("leave-notify-event", self.on_leave)
+         self.view.set_has_tooltip(True)
+         self.view.connect("query-tooltip", self.on_query_tooltip)
+         settings.listen(OVERRIDES_KEY, lambda key, value: self.view.queue_draw())
+      elif self.listTooltip:
+         self.view.set_tooltip_text(self.listTooltip)
+
+      self.view.get_selection().connect("changed", lambda selection: self.update_buttons())
+      self.load()
+      settings.listen(key, self.on_key_value_changed)
+
+   def title(self, column_id, fallback):
+      return _(self.columns.get(column_id, {}).get("title", fallback)).strip()
+
+   # (label, value) of an effect column's options (kept up to date by the extension, see _syncEffectOptions())
+   def effect_options(self, event):
+      return list(self.columns.get(event, {}).get("options", {}).items())
+
+   def effect_label(self, event, value):
+      for label, v in self.effect_options(event):
+         if v == value:
+            return _(label)
+      return str(value)
+
+   # --- load / save ---------------------------------------------------------------------------------------------
+   def default(self, column_id, fallback):
+      return self.columns.get(column_id, {}).get("default", fallback)
+
+   def row_values(self, rule):
+      values = [dict(rule), bool(rule.get("enabled", self.default("enabled", True)))]
+      for event in APP_RULE_EVENTS:
+         values.append(int(rule.get(event, self.default(event, NON_EFFECT_IDX[1]))))
+      values.append(str(rule.get("application", "")))
+      return values
+
+   def load(self):
+      self.store.clear()
+      for rule in self.settings.get_value(self.key) or []:
+         self.store.append(self.row_values(rule))
+      self.update_buttons()
+
+   def save(self):
+      rules = []
+      for r in self.store:
+         rule = dict(r[self.COL_DATA])
+         rule["enabled"] = r[self.COL_ENABLED]
+         for i, event in enumerate(APP_RULE_EVENTS):
+            rule[event] = r[self.COL_EFFECT + i]
+         rule["application"] = r[self.COL_APP]
+         rules.append(rule)
+      self.updating = True
+      self.settings.set_value(self.key, rules)
+      self.updating = False
+
+   # The rules changed elsewhere (i.e. the extension's "Pick a window to add" button)
+   def on_key_value_changed(self, key, value):
+      if not self.updating:
+         self.load()
+
+   # --- editing -------------------------------------------------------------------------------------------------
+   def on_enabled_toggled(self, renderer, path):
+      self.store[path][self.COL_ENABLED] = not self.store[path][self.COL_ENABLED]
+      self.save()
+
+   def effect_data_func(self, column, renderer, model, it, i):
+      renderer.set_property("text", self.effect_label(APP_RULE_EVENTS[i], model[it][self.COL_EFFECT + i]))
+
+   def on_effect_changed(self, combo, path, option_iter, i):
+      value = combo.get_property("model")[option_iter][1]
+      if self.store[path][self.COL_EFFECT + i] != value:
+         self.store[path][self.COL_EFFECT + i] = value
+         self.save()
+
+   def on_application_edited(self, renderer, path, text):
+      text = text.strip()
+      if self.store[path][self.COL_APP] != text:
+         self.store[path][self.COL_APP] = text
+         self.save()
+
+   def selected(self):
+      model, it = self.view.get_selection().get_selected()
+      return it
+
+   def update_buttons(self):
+      it = self.selected()
+      index = self.store.get_path(it).get_indices()[0] if it else -1
+      self.buttons["remove"].set_sensitive(it is not None)
+      self.buttons["up"].set_sensitive(index > 0)
+      self.buttons["down"].set_sensitive(0 <= index < len(self.store) - 1)
+
+   # A new (enabled) rule with the columns' defaults, then start typing its application name
+   def on_add(self):
+      rule = {c: self.default(c, None) for c in self.columns if self.default(c, None) is not None}
+      rule["enabled"] = True
+      rule["application"] = ""
+      it = self.store.append(self.row_values(rule))
+      self.save()
+      path = self.store.get_path(it)
+      self.view.get_selection().select_path(path)
+      self.view.set_cursor(path, self.appColumn, True)
+
+   # Remove the selected rule, and its custom settings
+   def on_remove(self):
+      it = self.selected()
+      if it is None:
+         return
+      rule_id = self.store[it][self.COL_DATA].get("id")
+      self.store.remove(it)
+      self.save()
+      if rule_id and self.gears:
+         overrides = self.settings.get_value(OVERRIDES_KEY) or {}
+         scopes = [app_rule_scope(rule_id, event) for event in APP_RULE_EVENTS]
+         if any(scope in overrides for scope in scopes):
+            overrides = copy.deepcopy(overrides)
+            for scope in scopes:
+               overrides.pop(scope, None)
+            self.settings.set_value(OVERRIDES_KEY, overrides)
+      self.update_buttons()
+
+   def on_move(self, step):
+      it = self.selected()
+      if it is None:
+         return
+      index = self.store.get_path(it).get_indices()[0]
+      if 0 <= index + step < len(self.store):
+         other = self.store.get_iter(Gtk.TreePath.new_from_indices([index + step]))
+         self.store.swap(it, other)
+         self.save()
+         self.update_buttons()
+
+   # --- custom settings gears -----------------------------------------------------------------------------------
+   # The gear for a row's effect: None (no gear), ICON_CONFIGURE or ICON_CUSTOM. Like the Randomized list: the
+   # checked gear is always shown, the plain gear only in the cell under the mouse pointer. No gear for Randomized
+   # or None, which have no settings of their own.
+   def gear_icon(self, rowIndex, i):
+      row = self.store[rowIndex]
+      value = row[self.COL_EFFECT + i]
+      if value in NON_EFFECT_IDX:
+         return None
+      rule_id = row[self.COL_DATA].get("id")
+      if rule_id and get_override_entry(self.settings, app_rule_scope(rule_id, APP_RULE_EVENTS[i]), value).get("enabled", False):
+         return ICON_CUSTOM
+      return ICON_CONFIGURE if (rowIndex, i) == self.hoverCell else None
+
+   def gear_data_func(self, column, renderer, model, it, i):
+      renderer.set_property("icon-name", self.gear_icon(model.get_path(it).get_indices()[0], i))
+
+   # The (row index, event index, path, column, gear renderer) of the shown gear at bin window x, y, or None
+   def gear_at(self, x, y):
+      hit = self.view.get_path_at_pos(x, y)
+      if hit:
+         path, column, cellX, cellY = hit
+         for i, gear in self.gearRenderers.items():
+            position = column.cell_get_position(gear)   # (start, width), or None if not in this column
+            if position and position[0] <= cellX < position[0] + position[1]:
+               rowIndex = path.get_indices()[0]
+               if self.gear_icon(rowIndex, i) is not None:
+                  return (rowIndex, i, path, column, gear)
+      return None
+
+   # A click on a gear opens its dialog, once GTK is idle: opening (and closing) it while the tree view is still
+   # handling the click crashes GTK.
+   def on_button_press(self, view, event):
+      if event.button == 1 and event.type == Gdk.EventType.BUTTON_PRESS and event.window == view.get_bin_window():
+         found = self.gear_at(int(event.x), int(event.y))
+         if found:
+            GLib.idle_add(self.open_gear_dialog, found[0], found[1])
+            return True
+      return False
+
+   def open_gear_dialog(self, rowIndex, i):
+      row = self.store[rowIndex]
+      rule = row[self.COL_DATA]
+      if not rule.get("id"):
+         # The rule's first custom settings: give it an id for them to belong to
+         rule = dict(rule)
+         rule["id"] = uuid.uuid4().hex[:12]
+         row[self.COL_DATA] = rule
+         self.save()
+      event = APP_RULE_EVENTS[i]
+      value = row[self.COL_EFFECT + i]
+      title = f"{row[self.COL_APP] or self.title('application', _('Application'))} {self.title(event, event.capitalize())}: {self.effect_label(event, value)}"
+      dialog = EffectSettingsDialog(self.get_toplevel(), self.settings, app_rule_scope(rule["id"], event), value, title)
+      dialog.run()
+      dialog.destroy()
+      self.view.queue_draw()
+      return GLib.SOURCE_REMOVE
+
+   # The (row index, event index) of the effect cell under the pointer, or None
+   def cell_at(self, event):
+      x, y = int(event.x), int(event.y)
+      if event.window != self.view.get_bin_window():
+         x, y = self.view.convert_widget_to_bin_window_coords(x, y)
+      hit = self.view.get_path_at_pos(x, y)
+      if hit:
+         i = self.view.get_columns().index(hit[1]) - 1   # The first column is Enabled
+         if 0 <= i < len(APP_RULE_EVENTS):
+            return (hit[0].get_indices()[0], i)
+      return None
+
+   def on_motion(self, view, event):
+      cell = self.cell_at(event)
+      if cell != self.hoverCell:
+         self.hoverCell = cell
+         self.view.queue_draw()
+      return False
+
+   def on_leave(self, view, event):
+      if self.hoverCell is not None:
+         self.hoverCell = None
+         self.view.queue_draw()
+      return False
+
+   def on_query_tooltip(self, view, x, y, keyboard, tooltip):
+      found, x, y, model, path, it = view.get_tooltip_context(x, y, keyboard)   # x, y are now bin window coordinates
+      if found and not keyboard:
+         gear = self.gear_at(x, y)
+         if gear:
+            rowIndex, i, path, column, renderer = gear
+            tooltip.set_text(_("Custom settings are in use for this effect") if self.gear_icon(rowIndex, i) == ICON_CUSTOM
+                             else _("Configure custom settings for this effect"))
+            view.set_tooltip_cell(tooltip, path, column, renderer)
+            return True
+      if self.listTooltip:
+         tooltip.set_text(self.listTooltip)
+         return True
+      return False
 
 patch_revealer()

@@ -17,9 +17,14 @@
 // We import some modules only in the Shell process as they are not available in the
 // preferences process. They are used only in the creator function of the ShaderFactory
 // which is only called within GNOME Shell's process.
-const {ShaderFactory} = require('./ShaderFactory.js');
+// The modules this file needs are handed in by extension.js through setModules(): the
+// file is shared by the Cinnamon 6.2 code (old module loader) and the 6.7.6+ code
+// (native importer), so it doesn't import them itself.
+let ShaderFactory = null;
+function setModules(modules) {
+  ({ShaderFactory} = modules);
+}
 const Clutter = imports.gi.Clutter;
-const GdkPixbuf = imports.gi.GdkPixbuf;
 const Cogl = imports.gi.Cogl;
 const St = imports.gi.St;
 
@@ -58,12 +63,10 @@ var Effect = class Effect {
     this.shaderFactory = new ShaderFactory(Effect.getNick(), (shader) => {
       // Create the texture in the first call.
       if (!this._fontTexture) {
-        const fontData    = GdkPixbuf.Pixbuf.new_from_file( GLib.get_user_data_dir() +
-           '/cinnamon/extensions/' + UUID + '/resources/img/matrixFont.png');
-        this._fontTexture = new St.ImageContent({preferred_width: fontData.width, preferred_height: fontData.height});
-        this._fontTexture.set_data( fontData.get_pixels(),
-          fontData.has_alpha ? Cogl.PixelFormat.RGBA_8888 : Cogl.PixelFormat.RGB_888,
-          fontData.width, fontData.height, fontData.rowstride);
+        // St.TextureCache loads (and caches) the image as a Cogl texture.
+        this._fontTexture = St.TextureCache.get_default().load_file_simple(
+           GLib.get_user_data_dir() + '/cinnamon/extensions/' + UUID +
+           '/resources/img/matrixFont.png').get_content().get_texture();
       }
 
       // Store uniform locations of newly created shaders.
@@ -97,7 +100,7 @@ var Effect = class Effect {
         const pipeline = shader.get_pipeline();
 
         // Bind the font texture.
-        pipeline.set_layer_texture(1, this._fontTexture.get_texture());
+        pipeline.set_layer_texture(1, this._fontTexture);
         pipeline.set_uniform_1i(shader._uFontTexture, 1);
       });
     });

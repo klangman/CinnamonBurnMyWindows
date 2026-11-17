@@ -25,8 +25,14 @@
 //   above   = clones of the windows above the window (no shader)                       //
 //////////////////////////////////////////////////////////////////////////////////////////
 
-const {ShaderFactory} = require('./ShaderFactory.js');
-const {LayeredEffect} = require('./LayeredEffect.js');
+// The modules this file needs are handed in by extension.js through setModules(): the
+// file is shared by the Cinnamon 6.2 code (old module loader) and the 6.7.6+ code
+// (native importer), so it doesn't import them itself.
+let ShaderFactory = null;
+let LayeredEffect = null;
+function setModules(modules) {
+  ({ShaderFactory, LayeredEffect} = modules);
+}
 
 const Gettext = imports.gettext;
 const GLib = imports.gi.GLib;

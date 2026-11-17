@@ -16,8 +16,14 @@
 // We import some modules only in the Shell process as they are not available in the
 // preferences process. They are used only in the creator function of the ShaderFactory
 // which is only called within GNOME Shell's process.
-const {ShaderFactory} = require('./ShaderFactory.js');
-const {LayeredEffect} = require('./LayeredEffect.js');
+// The modules this file needs are handed in by extension.js through setModules(): the
+// file is shared by the Cinnamon 6.2 code (old module loader) and the 6.7.6+ code
+// (native importer), so it doesn't import them itself.
+let ShaderFactory = null;
+let LayeredEffect = null;
+function setModules(modules) {
+  ({ShaderFactory, LayeredEffect} = modules);
+}
 const Clutter = imports.gi.Clutter;
 
 const Gettext = imports.gettext;

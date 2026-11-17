@@ -20,7 +20,13 @@
 // preferences process. The preferences process does not create any shader instances, it
 // only uses the static metadata of the effect.
 //const ShaderFactory = await utils.importInShellOnly('./ShaderFactory.js');
-const {ShaderFactory} = require('./ShaderFactory.js');
+// The modules this file needs are handed in by extension.js through setModules(): the
+// file is shared by the Cinnamon 6.2 code (old module loader) and the 6.7.6+ code
+// (native importer), so it doesn't import them itself.
+let ShaderFactory = null;
+function setModules(modules) {
+  ({ShaderFactory} = modules);
+}
 
 //const _ = await utils.importGettext();
 const Gettext = imports.gettext;

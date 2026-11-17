@@ -16,43 +16,65 @@
 
 'use strict';
 
-const AperturePanels = require('./effects/AperturePanels.js');
-const Apparition = require('./effects/Apparition.js');
-const AuraGlow = require('./effects/AuraGlow.js');
-const BrokenGlass = require('./effects/BrokenGlass.js');
-const Doom = require('./effects/Doom.js');
-const EnergizeA = require('./effects/EnergizeA.js');
-const EnergizeB = require('./effects/EnergizeB.js');
-const Fire = require('./effects/Fire.js');
-const Focus = require('./effects/Focus.js');
-const Glide = require('./effects/Glide.js');
-const Glitch = require('./effects/Glitch.js');
-const Hexagon = require('./effects/Hexagon.js');
-const Incinerate = require('./effects/Incinerate.js');
-const MagicLamp = require('./effects/MagicLamp.js');
-const Materialize = require('./effects/Materialize.js');
-const Morph = require('./effects/Morph.js');
-const Matrix = require('./effects/Matrix.js');
-const Mushroom = require('./effects/Mushroom.js');
-const PaintBrush = require('./effects/PaintBrush.js');
-const Pixelate = require('./effects/Pixelate.js');
-const PixelWheel = require('./effects/PixelWheel.js');
-const PixelWipe = require('./effects/PixelWipe.js');
-const Portal = require('./effects/Portal.js');
-const RGBWarp = require('./effects/RGBWarp.js');
-const Shredder = require('./effects/Shredder.js');
-const SnapOfDisintegration = require('./effects/SnapOfDisintegration.js');
-const TeamRocket = require('./effects/TeamRocket.js');
-const TRexAttack = require('./effects/TRexAttack.js');
-const TVEffect = require('./effects/TVEffect.js');
-const TVGlitch = require('./effects/TVGlitch.js');
-const VenetianBlinds = require('./effects/VenetianBlinds.js');
-const Wisps = require('./effects/Wisps.js');
-const Wormhole = require('./effects/Wormhole.js');
+const Me = imports.ui.extension.getCurrentExtension();
+const AperturePanels = Me.imports.effects.AperturePanels;
+const Apparition = Me.imports.effects.Apparition;
+const AuraGlow = Me.imports.effects.AuraGlow;
+const BrokenGlass = Me.imports.effects.BrokenGlass;
+const Doom = Me.imports.effects.Doom;
+const EnergizeA = Me.imports.effects.EnergizeA;
+const EnergizeB = Me.imports.effects.EnergizeB;
+const Fire = Me.imports.effects.Fire;
+const Focus = Me.imports.effects.Focus;
+const Glide = Me.imports.effects.Glide;
+const Glitch = Me.imports.effects.Glitch;
+const Hexagon = Me.imports.effects.Hexagon;
+const Incinerate = Me.imports.effects.Incinerate;
+const MagicLamp = Me.imports.effects.MagicLamp;
+const Materialize = Me.imports.effects.Materialize;
+const Morph = Me.imports.effects.Morph;
+const Matrix = Me.imports.effects.Matrix;
+const Mushroom = Me.imports.effects.Mushroom;
+const PaintBrush = Me.imports.effects.PaintBrush;
+const Pixelate = Me.imports.effects.Pixelate;
+const PixelWheel = Me.imports.effects.PixelWheel;
+const PixelWipe = Me.imports.effects.PixelWipe;
+const Portal = Me.imports.effects.Portal;
+const RGBWarp = Me.imports.effects.RGBWarp;
+const Shredder = Me.imports.effects.Shredder;
+const SnapOfDisintegration = Me.imports.effects.SnapOfDisintegration;
+const TeamRocket = Me.imports.effects.TeamRocket;
+const TRexAttack = Me.imports.effects.TRexAttack;
+const TVEffect = Me.imports.effects.TVEffect;
+const TVGlitch = Me.imports.effects.TVGlitch;
+const VenetianBlinds = Me.imports.effects.VenetianBlinds;
+const Wisps = Me.imports.effects.Wisps;
+const Wormhole = Me.imports.effects.Wormhole;
 
-const ShouldAnimateManager = require("ShouldAnimateManager.js");
-const Layers = require('./LayeredEffect.js');
-const RaiseEffect = require('./RaiseEffect.js');
+const ShouldAnimateManager = Me.imports.ShouldAnimateManager;
+const Layers = Me.imports.LayeredEffect;
+const RaiseEffect = Me.imports.RaiseEffect;
+const ShaderModule = Me.imports.Shader;
+const ShaderFactoryModule = Me.imports.ShaderFactory;
+
+// The shared modules (effects/, LayeredEffect.js, ...) are loaded differently on
+// Cinnamon 6.2 and 6.7.6+, so they don't import each other. Hand them the modules
+// they need before anything gets constructed.
+const SHARED_MODULES = {
+  Shader:               ShaderModule,
+  ShaderFactory:        ShaderFactoryModule.ShaderFactory,
+  Layers:               Layers,
+  LayeredEffect:        Layers.LayeredEffect,
+  ShouldAnimateManager: ShouldAnimateManager,
+};
+for (const mod of [ShaderFactoryModule, RaiseEffect, AperturePanels, Apparition,
+                   AuraGlow, BrokenGlass, Doom, EnergizeA, EnergizeB, Fire, Focus,
+                   Glide, Glitch, Hexagon, Incinerate, MagicLamp, Materialize, Morph,
+                   Matrix, Mushroom, PaintBrush, Pixelate, PixelWheel, PixelWipe,
+                   Portal, RGBWarp, Shredder, SnapOfDisintegration, TeamRocket,
+                   TRexAttack, TVEffect, TVGlitch, VenetianBlinds, Wisps, Wormhole]) {
+  mod.setModules(SHARED_MODULES);
+}
 
 const Main = imports.ui.main;
 const Gio = imports.gi.Gio;
@@ -1297,7 +1319,7 @@ class BurnMyWindows {
   _createBehindLayer(actor, rect, stack) {
     const layer = this._createCloneLayer(rect);
 
-    if (global.background_actor) Layers.addClone(layer, global.background_actor, rect.x, rect.y);
+    for (const bg of Layers.getBackgroundActors()) Layers.addClone(layer, bg, rect.x, rect.y);
 
     const desklets = (Main.deskletContainer && Main.deskletContainer.actor) || null;
     let deskletsAdded = false;
@@ -1431,7 +1453,7 @@ class BurnMyWindows {
 
   // The topmost visible window on the current workspace whose frame contains (x, y), or null
   _windowAtPoint(x, y) {
-    let workspace = (global.workspace_manager || global.screen).get_active_workspace();
+    let workspace = global.workspace_manager.get_active_workspace();
     let types = [Meta.WindowType.NORMAL, Meta.WindowType.DIALOG, Meta.WindowType.MODAL_DIALOG, Meta.WindowType.UTILITY];
     let windows = global.display.list_windows(0).filter(w =>
        types.includes(w.get_window_type()) && !w.minimized && w.showing_on_its_workspace() &&

@@ -52,7 +52,7 @@ const SHADOW_MARGIN = 64;
 // (_clutter_actor_box_enlarge_for_effects): x2' = ceil(x2 + 0.75), x1' = x2' - width, so
 // most of it is on the left / top ('enlarged'); 'centred' for a Muffin patched to pad
 // evenly. See Shader.getTextureRect(). Also used by extension.js's unscaled canvas.
-const TEX_PADDING = 'enlarged';
+var TEX_PADDING = 'enlarged';
 
 // Marks our actors in the window group's parent (see insertAboveWindows()).
 const LAYER_MARK = '_bmwEffectLayer';
@@ -72,7 +72,7 @@ function black() {
 // would be.
 // They also go above any other effect's actors that are still there, so the newest
 // animation, which has cloned those into its own layers, is drawn on top.
-const insertAboveWindows = function(actors) {
+var insertAboveWindows = function(actors) {
   const wg    = global.window_group;
   let parent  = wg ? wg.get_parent() : null;
   let sibling = wg;
@@ -95,10 +95,20 @@ const insertAboveWindows = function(actors) {
 };
 
 // Adds a clone of any actor to `layer`, whose top-left is at ox, oy on the stage.
-const addClone = function(layer, source, ox, oy) {
+var addClone = function(layer, source, ox, oy) {
   const [sx, sy] = source.get_transformed_position();
   layer.add_child(new Clutter.Clone(
     {source: source, reactive: false, x: Math.round(sx - ox), y: Math.round(sy - oy)}));
+};
+
+// The desktop wallpaper actor(s). Cinnamon 6.8+ has one per monitor and
+// the old single background actor is NULL there (always on Wayland); older releases only have the
+// single global actor.
+var getBackgroundActors = function() {
+  if (typeof global.get_background_actors === 'function') {
+    return global.get_background_actors() || [];
+  }
+  return global.background_actor ? [global.background_actor] : [];
 };
 
 // Adds a clone of window actor `wa` to `layer`, whose top-left is at ox, oy on the stage.
@@ -110,7 +120,7 @@ const addClone = function(layer, source, ox, oy) {
 //   its effect actor is cloned on
 //   top, so that animation shows through ours. Once it ends that clone goes blank and
 //   the window clone (opacity back to 255) takes over.
-const addWindowClone = function(layer, wa, ox, oy) {
+var addWindowClone = function(layer, wa, ox, oy) {
   const clone = new Clutter.Clone(
     {source: wa, reactive: false, x: Math.round(wa.x - ox), y: Math.round(wa.y - oy)});
   wa.bind_property('opacity', clone, 'opacity', GObject.BindingFlags.SYNC_CREATE);
@@ -143,7 +153,7 @@ const addWindowClone = function(layer, wa, ox, oy) {
 // windowsNear(rect, above): the visible windows below (above = false) or above
 // (above = true) `actor` that intersect `rect`. Windows just outside `rect` count too, as
 // their shadow may reach into it (the layers are opaque, so the real one is hidden there).
-const createStackTracker = function(actor, disappearing) {
+var createStackTracker = function(actor, disappearing) {
   const self     = actor.get_meta_window();
   const raised   = new Set();  // MetaWindows raised during the animation
   const ids      = new Map();  // window actor -> small number, for the stacking signature
@@ -291,7 +301,7 @@ const createStackTracker = function(actor, disappearing) {
 // Moves / resizes window actor `actor` to its window's buffer rect. Muffin doesn't do
 // this while an effect runs on the actor; see the per-frame code of LayeredEffect.create()
 // and of extension.js's _setupEffect().
-const followBufferRect = function(actor, metaWindow) {
+var followBufferRect = function(actor, metaWindow) {
   const b = metaWindow.get_buffer_rect();
   if (actor.x !== b.x || actor.y !== b.y) {
     actor.set_position(b.x, b.y);
@@ -421,8 +431,8 @@ var LayeredEffect = class LayeredEffect {
       // windows behind. Which windows are below / above is decided by the stack tracker
       // (it knows about windows raised while this one closes or minimizes).
       const desk = opts.desktopOnWall ? wall : surface;
-      if (!opts.noDesktop && global.background_actor) {
-        addClone(desk, global.background_actor, g.ox, g.oy);
+      if (!opts.noDesktop) {
+        for (const bg of getBackgroundActors()) addClone(desk, bg, g.ox, g.oy);
       }
 
       const area      = {x: g.ox, y: g.oy, width: g.OW, height: g.OH};

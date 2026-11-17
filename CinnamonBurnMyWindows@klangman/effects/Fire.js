@@ -25,7 +25,13 @@
 //const Clutter       = await utils.importInShellOnly('gi://Clutter');
 
 //const _ = await utils.importGettext();
-const {ShaderFactory} = require('./ShaderFactory.js');
+// The modules this file needs are handed in by extension.js through setModules(): the
+// file is shared by the Cinnamon 6.2 code (old module loader) and the 6.7.6+ code
+// (native importer), so it doesn't import them itself.
+let ShaderFactory = null;
+function setModules(modules) {
+  ({ShaderFactory} = modules);
+}
 const Clutter = imports.gi.Clutter;
 const Gio = imports.gi.Gio;
 

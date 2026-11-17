@@ -14,7 +14,13 @@ const Main    = imports.ui.main;
 // second restack, ...).
 const SAME_RAISE_US = 100 * 1000;
 
-const Layers = require('./LayeredEffect.js');
+// The modules this file needs are handed in by extension.js through setModules(): the
+// file is shared by the Cinnamon 6.2 code (old module loader) and the 6.7.6+ code
+// (native importer), so it doesn't import them itself.
+let Layers = null;
+function setModules(modules) {
+  ({Layers} = modules);
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Raise effects: played when a window that is visible but partly covered by other      //
@@ -98,7 +104,7 @@ var RaiseWatcher = class RaiseWatcher {
     this._enabled = true;
 
     const display = global.display;
-    const wm      = global.workspace_manager || global.screen;
+    const wm      = global.workspace_manager;
 
     for (const actor of global.get_window_actors()) {
       this._watchWindow(actor.get_meta_window());

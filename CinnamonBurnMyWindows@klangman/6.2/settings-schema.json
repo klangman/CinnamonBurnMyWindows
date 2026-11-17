@@ -1599,7 +1599,7 @@
     },
     "description": "Open/Close Edge",
     "dependency" : "effect-selector=26",
-    "tooltip": "The monitor edge where a window should originate from when opening, or disappear towards when closing. This setting is not used for minimize or unminimize events"
+    "tooltip": "The monitor edge where a window should originate from when opening, or disappear towards when closing, when the window has no window-list button to use (usually the case when opening). This setting is not used for minimize or unminimize events"
   },
 
   "magiclamp-edge-offset": {

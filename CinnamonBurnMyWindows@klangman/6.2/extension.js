@@ -53,6 +53,26 @@ const Wormhole = require('./effects/Wormhole.js');
 const ShouldAnimateManager = require("ShouldAnimateManager.js");
 const Layers = require('./LayeredEffect.js');
 const RaiseEffect = require('./RaiseEffect.js');
+const ShaderModule = require('./Shader.js');
+const ShaderFactoryModule = require('./ShaderFactory.js');
+
+// The shared modules (effects/, LayeredEffect.js, ...) are loaded differently on
+// Cinnamon 6.2 and 6.7.6+, so they don't import each other. Hand them the modules
+// they need before anything gets constructed.
+const SHARED_MODULES = {
+  Shader:               ShaderModule,
+  ShaderFactory:        ShaderFactoryModule.ShaderFactory,
+  Layers:               Layers,
+  LayeredEffect:        Layers.LayeredEffect,
+  ShouldAnimateManager: ShouldAnimateManager,
+};
+for (const mod of [ShaderFactoryModule, RaiseEffect, AperturePanels, Apparition,
+                   AuraGlow, Doom, EnergizeA, EnergizeB, Fire, Focus, Glide, Glitch,
+                   Hexagon, Incinerate, MagicLamp, Materialize, Morph, Mushroom,
+                   Pixelate, PixelWheel, PixelWipe, Portal, RGBWarp, Shredder,
+                   TeamRocket, TVEffect, TVGlitch, VenetianBlinds, Wisps, Wormhole]) {
+  mod.setModules(SHARED_MODULES);
+}
 
 const Main = imports.ui.main;
 const Gio = imports.gi.Gio;
@@ -1297,7 +1317,7 @@ class BurnMyWindows {
   _createBehindLayer(actor, rect, stack) {
     const layer = this._createCloneLayer(rect);
 
-    if (global.background_actor) Layers.addClone(layer, global.background_actor, rect.x, rect.y);
+    for (const bg of Layers.getBackgroundActors()) Layers.addClone(layer, bg, rect.x, rect.y);
 
     const desklets = (Main.deskletContainer && Main.deskletContainer.actor) || null;
     let deskletsAdded = false;
@@ -1431,7 +1451,7 @@ class BurnMyWindows {
 
   // The topmost visible window on the current workspace whose frame contains (x, y), or null
   _windowAtPoint(x, y) {
-    let workspace = (global.workspace_manager || global.screen).get_active_workspace();
+    let workspace = global.workspace_manager.get_active_workspace();
     let types = [Meta.WindowType.NORMAL, Meta.WindowType.DIALOG, Meta.WindowType.MODAL_DIALOG, Meta.WindowType.UTILITY];
     let windows = global.display.list_windows(0).filter(w =>
        types.includes(w.get_window_type()) && !w.minimized && w.showing_on_its_workspace() &&

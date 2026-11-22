@@ -108,9 +108,9 @@ const Effect = {
   Incinerate:  {idx: 9,  name: "Incinerate"},
   MagicLamp:   {idx: 26, name: "Magic Lamp"},
   Materialize: {idx: 30, name: "Materialize"},
+  Matrix:      {idx: 10, name: "Matrix"},
   Morph:       {idx: 29, name: "Morph"},
   Mushroom:    {idx: 25, name: "Mushroom"},
-  Matrix:      {idx: 10, name: "Matrix"},
   PaintBrush:  {idx: 11, name: "Paint Brush"},
   Pixelate:    {idx: 12, name: "Pixelate"},
   PixelWheel:  {idx: 13, name: "Pixel Wheel"},
@@ -385,15 +385,17 @@ class BurnMyWindows {
     return {all, effectsOnly};
   }
 
-  // Simple equality check for two "name -> idx" option maps, used to avoid rewriting (and
+  // Simple equality check (including order) for two "name -> idx" option maps, used to avoid rewriting (and
   // re-saving) the settings file on every enable() when nothing has actually changed.
   _optionsEqual(a, b) {
     if (!a) return false;
     let aKeys = Object.keys(a);
     let bKeys = Object.keys(b);
     if (aKeys.length !== bKeys.length) return false;
-    for (let key of aKeys) {
-      if (a[key] !== b[key]) return false;
+    for (let i = 0; i < aKeys.length; i++) {
+      // Order matters too: the comboboxes list the options in this order, so a reordered
+      // Effect const has to be written back to the settings file.
+      if (aKeys[i] !== bKeys[i] || a[aKeys[i]] !== b[bKeys[i]]) return false;
     }
     return true;
   }
